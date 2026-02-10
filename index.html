@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engineering Portfolio</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
+    <!-- React & ReactDOM (UMD - Global Scope) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+    <!-- Babel (Standalone) -->
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <!-- Tailwind CSS (Play CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        background: '#121212',
+                        surface: '#1E1E1E',
+                        'circuit-green': '#00FF9D',
+                        'electric-blue': '#00D1FF',
+                        'dim-gray': '#2D2D2D',
+                        'math-pink': '#FF0055',
+                        'fin-gold': '#FFAA00',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    backgroundImage: {
+                        'grid-pattern': "linear-gradient(to right, #2D2D2D 1px, transparent 1px), linear-gradient(to bottom, #2D2D2D 1px, transparent 1px)",
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom CSS -->
+    <style>
+        body {
+            background-color: #121212;
+            color: #E0E0E0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .bg-grid {
+            background-size: 40px 40px;
+            mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+            -webkit-mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+        }
+
+        /* Schematic Line Animation */
+        .schematic-line {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: dash 2s ease-in-out forwards;
+        }
+
+        .schematic-line-faded {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 0;
+            opacity: 0.1;
+            transition: opacity 0.5s ease;
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        /* Hover Glow */
+        .glow-hover {
+            transition: all 0.3s ease;
+        }
+
+        /* Fade In Animation */
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <!-- Application Script -->
+    <script type="text/babel">
+        // Access globals
+        const { useState, useEffect } = React;
+
+        // --- Data ---
+        const CATEGORIES = {
+            MATH: { id: 'MATH', label: 'Mathematics', color: '#FF0055', iconPath: "M10 20l4-16m4 4l-4 8" }, // Approximation for Sigma/Math
+            EE: { id: 'EE', label: 'Electrical Eng', color: '#00FF9D', iconPath: "M13 2L3 14h9l-1 8 10-12h-9l1-8z" },
+            FIN: { id: 'FIN', label: 'Financial', color: '#FFAA00', iconPath: "M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" },
+            SE: { id: 'SE', label: 'Software Eng', color: '#00D1FF', iconPath: "M16 18l6-6-6-6 M8 6l-6 6 6 6" },
+        };
+
+        const PROJECTS = [
+            { id: 1, title: 'Rocket Canard Sim', category: 'EE', tags: ['Python', 'Control Theory'], description: 'Simulation of rocket stability using actuable canards.' },
+            { id: 2, title: 'Taxicab Geometry', category: 'MATH', tags: ['Topology', 'JS'], description: 'Visual explorer for non-Euclidean distance metrics.' },
+            { id: 3, title: 'Algorithmic Trading', category: 'FIN', tags: ['Python', 'Pandas'], description: 'Backtesting engine for mean-reversion strategies.' },
+            { id: 4, title: 'Sudoku Solver', category: 'MATH', tags: ['Constraint Programming'], description: 'Advanced solver for variant sudoku puzzles.' },
+            { id: 5, title: 'Portfolio Website', category: 'SE', tags: ['React', 'Tailwind'], description: 'The site you are looking at right now. Recursive.' },
+            { id: 6, title: 'PCB Design', category: 'EE', tags: ['KiCad', 'Hardware'], description: 'Custom microcontroller board for home automation.' },
+            { id: 7, title: 'Budget Planner', category: 'FIN', tags: ['React', 'Firebase'], description: 'Personal finance dashboard and forecasting tool.' },
+        ];
+
+        // --- Components ---
+
+        // Simple Icon Component
+        const Icon = ({ path, color, size = 24 }) => (
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width={size}
+                height={size}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke={color}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            >
+                <path d={path} />
+            </svg>
+        );
+
+        const Hero = ({ activeCategory, setActiveCategory }) => {
+            const center = { x: 400, y: 300 };
+            const nodes = [
+                { id: 'MATH', x: 200, y: 150 },
+                { id: 'EE', x: 600, y: 150 },
+                { id: 'FIN', x: 200, y: 450 },
+                { id: 'SE', x: 600, y: 450 },
+            ];
+
+            return (
+                <div className="relative w-full h-[600px] flex items-center justify-center overflow-hidden mb-12 select-none">
+                    <svg className="absolute w-full h-full max-w-[800px]" viewBox="0 0 800 600">
+                        {nodes.map((node) => {
+                            const isActive = activeCategory === node.id || activeCategory === null;
+                            const color = CATEGORIES[node.id].color;
+
+                            return (
+                                <g key={node.id}>
+                                    {/* Line */}
+                                    <line
+                                        x1={center.x}
+                                        y1={center.y}
+                                        x2={node.x}
+                                        y2={node.y}
+                                        stroke={color}
+                                        strokeWidth="2"
+                                        className={isActive ? "schematic-line" : "schematic-line-faded"}
+                                        style={{ opacity: isActive ? 0.6 : 0.1 }}
+                                    />
+                                    {/* Node Dot */}
+                                    <circle
+                                        cx={node.x}
+                                        cy={node.y}
+                                        r={isActive ? 8 : 4}
+                                        fill={color}
+                                        className="cursor-pointer transition-all duration-300"
+                                        onClick={() => setActiveCategory(activeCategory === node.id ? null : node.id)}
+                                        style={{ filter: isActive ? `drop-shadow(0 0 8px ${color})` : 'none' }}
+                                    />
+                                </g>
+                            );
+                        })}
+
+                        {/* Center Node */}
+                        <circle
+                            cx={center.x}
+                            cy={center.y}
+                            r="12"
+                            fill="#FFFFFF"
+                            className="cursor-pointer transition-all duration-300 hover:r-14"
+                            onClick={() => setActiveCategory(null)}
+                            style={{ filter: "drop-shadow(0 0 10px rgba(255,255,255,0.8))" }}
+                        />
+                    </svg>
+
+                    {/* Overlay Labels */}
+                    <div className="absolute inset-0 max-w-[800px] mx-auto pointer-events-none">
+                        <div className="relative w-full h-full">
+                            {/* Center Label */}
+                            <div
+                                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-auto cursor-pointer"
+                                onClick={() => setActiveCategory(null)}
+                            >
+                                <div className="bg-background/90 px-4 py-2 rounded border border-white/20 backdrop-blur-sm hover:border-white/50 transition-colors">
+                                    <h1 className="text-3xl font-bold tracking-tighter text-white">KAMER</h1>
+                                    <p className="text-xs text-gray-400 font-mono mt-1">ENGINEER_</p>
+                                </div>
+                            </div>
+
+                            {/* Category Buttons */}
+                            {nodes.map(node => {
+                                const cat = CATEGORIES[node.id];
+                                const isActive = activeCategory === cat.id || activeCategory === null;
+                                const xPercent = (node.x / 800) * 100;
+                                const yPercent = (node.y / 600) * 100;
+
+                                return (
+                                    <button
+                                        key={node.id}
+                                        className={`absolute pointer-events-auto transform -translate-x-1/2 -translate-y-1/2 px-4 py-2 rounded-lg border backdrop-blur-md transition-all duration-300 group
+                                            ${isActive ? 'border-opacity-100 bg-opacity-10' : 'border-opacity-20 bg-opacity-5 text-gray-600 grayscale'}
+                                        `}
+                                        style={{
+                                            left: `${xPercent}%`,
+                                            top: `${yPercent}%`,
+                                            borderColor: cat.color,
+                                            backgroundColor: isActive ? `${cat.color}10` : 'transparent',
+                                            color: isActive ? 'white' : '#444'
+                                        }}
+                                        onClick={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <Icon path={cat.iconPath} color={isActive ? cat.color : '#444'} size={18} />
+                                            <span className="font-mono text-sm tracking-widest group-hover:tracking-[0.2em] transition-all">{cat.label}</span>
+                                        </div>
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ProjectCard = ({ project }) => {
+            const cat = CATEGORIES[project.category];
+
+            return (
+                <div
+                    className="fade-in group relative bg-surface border border-dim-gray p-6 rounded-xl overflow-hidden hover:border-opacity-100 transition-colors duration-300"
+                    style={{ borderColor: '#2D2D2D' }} // base border
+                    onMouseEnter={(e) => e.currentTarget.style.borderColor = cat.color}
+                    onMouseLeave={(e) => e.currentTarget.style.borderColor = '#2D2D2D'}
+                >
+                    {/* Interior Glow */}
+                    <div
+                        className="absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-300 pointer-events-none"
+                        style={{ backgroundColor: cat.color }}
+                    ></div>
+
+                    <div className="flex justify-between items-start mb-4 relative z-10">
+                        <span className="font-mono text-xs px-2 py-1 rounded bg-black/50 text-[--hover-color]" style={{ color: cat.color }}>
+                            [{project.category}]
+                        </span>
+                    </div>
+
+                    <h3 className="text-xl font-bold text-gray-100 mb-2 group-hover:text-[--hover-color] transition-colors relative z-10" style={{ color: 'inherit' }}>
+                        {project.title}
+                    </h3>
+
+                    <p className="text-gray-400 text-sm mb-6 line-clamp-3 relative z-10">
+                        {project.description}
+                    </p>
+
+                    <div className="flex flex-wrap gap-2 mt-auto relative z-10">
+                        {project.tags.map(tag => (
+                            <span key={tag} className="text-xs font-mono text-gray-500 border border-dim-gray px-2 py-1 rounded bg-background/50">
+                                {tag}
+                            </span>
+                        ))}
+                    </div>
+
+                    {/* Decorative Corner */}
+                    <div
+                        className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 transition-colors duration-300 rounded-br-xl"
+                        style={{ borderColor: '#2D2D2D' }}
+                    ></div>
+                    <style jsx>{`
+                        .group:hover .absolute.bottom-0 {
+                            border-color: ${cat.color} !important;
+                        }
+                    `}</style>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [activeCategory, setActiveCategory] = useState(null);
+
+            const filteredProjects = activeCategory
+                ? PROJECTS.filter(p => p.category === activeCategory)
+                : PROJECTS;
+
+            return (
+                <div className="min-h-screen relative overflow-x-hidden">
+                    {/* Background Grid */}
+                    <div className="fixed inset-0 bg-grid-pattern bg-grid opacity-20 pointer-events-none"></div>
+
+                    <div className="container mx-auto px-4 py-8 relative z-10">
+                        {/* Header */}
+                        <header className="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
+                            <div className="flex items-center gap-2">
+                                <span className="text-circuit-green">
+                                    <Icon path="M4 10l8 8 8-8" color="#00FF9D" />
+                                </span>
+                                <span className="font-mono text-xl tracking-tighter text-white">PORTFOLIO_V1.0</span>
+                            </div>
+                        </header>
+
+                        {/* Hero Section */}
+                        <Hero activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
+
+                        {/* Projects Section */}
+                        <section className="mt-12">
+                            <div className="flex justify-between items-end mb-8">
+                                <h2 className="text-3xl font-bold text-white">
+                                    {activeCategory ? (
+                                        <span className="flex items-center gap-3">
+                                            Projects_
+                                            <span style={{ color: CATEGORIES[activeCategory].color }}>
+                                                {CATEGORIES[activeCategory].label}
+                                            </span>
+                                        </span>
+                                    ) : (
+                                        "All_Projects"
+                                    )}
+                                </h2>
+                                <span className="font-mono text-gray-500 text-sm">
+                                    COUNT: {filteredProjects.length.toString().padStart(2, '0')}
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {filteredProjects.map(project => (
+                                    <ProjectCard key={project.id} project={project} />
+                                ))}
+                            </div>
+                        </section>
+
+                        {/* Footer */}
+                        <footer className="mt-32 border-t border-white/10 pt-8 text-center text-gray-600 font-mono text-sm">
+                            <p>© 2026 KAMER. SYSTEM OPERATIONAL.</p>
+                        </footer>
+                    </div>
+                </div>
+            );
+        };
+
+        // Render Loop
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+
+</html>
