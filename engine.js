@@ -126,15 +126,28 @@
             currentMode.onPaint(col, row, shared);
     }
 
-    document.addEventListener("mousedown", e => {
-        if (e.button === 0 && !column.contains(e.target)) {
+    document.addEventListener("mousedown", function (e) {
+        var inColumn = column.contains(e.target);
+        // Modes with onMouseDown (e.g. Minesweeper) handle their own clicks.
+        // fullCanvas modes also receive clicks when column is showing.
+        if (currentMode.onMouseDown && (!inColumn || currentMode.fullCanvas)) {
+            currentMode.onMouseDown(e, shared);
+            return;
+        }
+        // CA-style drag painting: left button, outside column only
+        if (e.button === 0 && !inColumn) {
             e.preventDefault();
             painting = true;
             tryPaint(e);
         }
     });
-    document.addEventListener("mousemove", e => { if (painting) tryPaint(e); });
-    document.addEventListener("mouseup", () => { painting = false; });
+    document.addEventListener("mousemove", function (e) { if (painting) tryPaint(e); });
+    document.addEventListener("mouseup", function () { painting = false; });
+
+    // Suppress context menu when the current mode handles right-click
+    document.addEventListener("contextmenu", function (e) {
+        if (currentMode.onMouseDown) e.preventDefault();
+    });
 
     canvas.addEventListener("touchstart", e => {
         e.preventDefault();
