@@ -11,7 +11,7 @@
     "use strict";
 
     const STEP_MS = 130;
-    const TURBO_MS = 55;
+    const TURBO_MS = 25;
     const HOLD_DELAY = 350;  // ms before turbo kicks in
     const RED_HEX = "#c0392b";
     const HEAD_HEX = "#4a3829"; // slightly lighter than body
