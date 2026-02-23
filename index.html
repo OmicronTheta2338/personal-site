@@ -154,11 +154,11 @@
         document.getElementById("yr").textContent = new Date().getFullYear();
     </script>
 
-    <!--
-    life.js must load AFTER the column is in the DOM so that
-    column.offsetHeight is accurate when the grid is sized.
-  -->
-    <script src="life.js"></script>
+    <!-- Load modes first so window.__modes is populated before engine.js runs.
+         To add a new game: create modes/mygame.js and add a <script> tag here. -->
+    <script src="modes/ca.js"></script>
+    <script src="modes/snake.js"></script>
+    <script src="engine.js"></script>
 </body>
 
 </html>
