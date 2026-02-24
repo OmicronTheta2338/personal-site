@@ -297,6 +297,25 @@
         step: function (_s) { },
         render: function (s) { render(s); },
 
+        getSolids: function (_shared) {
+            if (!cells || gameState === "wait") return [];
+            var solids = [];
+            for (var r = 0; r < MSROWS; r++) {
+                for (var c = 0; c < MSCOLS; c++) {
+                    var cell = cells[idx(c, r)];
+                    if (cell.revealed || cell.flagged) {
+                        solids.push({
+                            left: c * MS,
+                            right: c * MS + MS,
+                            top: r * MS,
+                            bottom: r * MS + MS
+                        });
+                    }
+                }
+            }
+            return solids;
+        },
+
         onMouseDown: function (e, shared) {
             var mc = Math.floor((e.clientX + window.scrollX) / MS);
             var mr = Math.floor((e.clientY + window.scrollY) / MS);

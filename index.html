@@ -26,8 +26,18 @@
            HEADER
            ═══════════════════════════════════════════ -->
             <header id="site-header">
-                <h1>Kameran Russell</h1>
-                <p class="tagline">// Hello there! //</p>
+                <div>
+                    <h1>Kameran Russell</h1>
+                    <p class="tagline">// Hello there! //</p>
+                </div>
+                <div id="platformer-toggle-container"
+                    style="display: flex; flex-direction: column; align-items: flex-end; margin-left: auto;">
+                    <label style="font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        <input type="checkbox" id="platformer-toggle" autocomplete="off">
+                        Platformer Controls
+                    </label>
+                    <span style="font-size: 0.75rem; opacity: 0.7;">A/D to move; W to jump; Enter to click</span>
+                </div>
             </header>
 
             <!-- ── Navigation ─────────────────────────── -->
@@ -139,6 +149,7 @@
     <script src="modes/ca.js"></script>
     <script src="modes/snake.js"></script>
     <script src="modes/minesweeper.js"></script>
+    <script src="modes/platformer.js"></script>
     <script src="engine.js"></script>
 </body>
 

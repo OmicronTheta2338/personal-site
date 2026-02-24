@@ -58,6 +58,7 @@
         COL_LEFT_CELL, COL_RIGHT_CELL,
         COL_TOP_CELL, COL_BOTTOM_CELL,
         columnHidden: false,
+        currentMode: null, // Track currently active main gamemode
     };
 
     /* ── Column visibility toggle (Escape) ───────────────────── */
@@ -68,18 +69,34 @@
 
     /* ── Mode management ─────────────────────────────────────── */
     let currentMode = null;
+    let overlayMode = null;
 
     function selectMode(id) {
         const mode = MODES.find(m => m.id === id);
         if (!mode) return;
         if (currentMode && currentMode.deactivate) currentMode.deactivate();
         currentMode = mode;
+        shared.currentMode = currentMode;
         if (currentMode.activate) currentMode.activate(shared);
+    }
+
+    const platformerCheckbox = document.getElementById("platformer-toggle");
+    if (platformerCheckbox) {
+        const platformer = MODES.find(m => m.id === "platformer");
+        platformerCheckbox.addEventListener("change", (e) => {
+            if (e.target.checked) {
+                overlayMode = platformer;
+                if (overlayMode && overlayMode.activate) overlayMode.activate(shared);
+            } else {
+                if (overlayMode && overlayMode.deactivate) overlayMode.deactivate(shared);
+                overlayMode = null;
+            }
+        });
     }
 
     // Initialise all modes once, then activate the first
     MODES.forEach(m => { if (m.init) m.init(shared); });
-    selectMode(MODES[0].id);
+    selectMode(MODES[0].id); // Defaults to Game of Life since Platformer was removed from the list
 
     /* ── Main loop ───────────────────────────────────────────── */
     let lastStep = 0;
@@ -87,11 +104,25 @@
         const ms = typeof currentMode.stepMs === "function"
             ? currentMode.stepMs()
             : currentMode.stepMs;
+
         if (ts - lastStep >= ms) {
             currentMode.step(shared);
+            if (overlayMode && !overlayMode.stepMs) overlayMode.step(shared); // Run synced if overlay has no local step
             lastStep = ts;
         }
+
+        if (overlayMode && typeof overlayMode.step === 'function') {
+            // Platformer runs much faster (16ms) than Life (100ms)
+            const overlayMs = typeof overlayMode.stepMs === "function" ? overlayMode.stepMs() : (overlayMode.stepMs || 16);
+            if (!overlayMode._lastStep) overlayMode._lastStep = 0;
+            if (ts - overlayMode._lastStep >= overlayMs) {
+                overlayMode.step(shared);
+                overlayMode._lastStep = ts;
+            }
+        }
+
         currentMode.render(shared);
+        if (overlayMode) overlayMode.render(shared);
         requestAnimationFrame(loop);
     }
     requestAnimationFrame(loop);
@@ -104,9 +135,11 @@
     /* ── Keyboard ─────────────────────────────────────────────── */
     document.addEventListener("keydown", e => {
         if (e.key === "Escape") { toggleColumn(); return; }
-        if (currentMode.onKeyDown) currentMode.onKeyDown(e, shared);
+        if (overlayMode && overlayMode.onKeyDown) overlayMode.onKeyDown(e, shared);
+        if (currentMode.onKeyDown && !e.defaultPrevented) currentMode.onKeyDown(e, shared);
     });
     document.addEventListener("keyup", e => {
+        if (overlayMode && overlayMode.onKeyUp) overlayMode.onKeyUp(e, shared);
         if (currentMode.onKeyUp) currentMode.onKeyUp(e, shared);
     });
 

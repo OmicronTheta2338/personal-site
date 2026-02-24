@@ -192,6 +192,33 @@
             if (e.key.toLowerCase() === heldKey) heldKey = null;
         },
 
+        getSolids(shared) {
+            if (!snake || !snake.alive) return [];
+            const solids = [];
+
+            // Push Apple
+            if (snake.apple) {
+                solids.push({
+                    left: snake.apple.c * shared.CELL,
+                    right: snake.apple.c * shared.CELL + shared.CELL,
+                    top: snake.apple.r * shared.CELL,
+                    bottom: snake.apple.r * shared.CELL + shared.CELL
+                });
+            }
+
+            // Push Body
+            snake.body.forEach(cell => {
+                solids.push({
+                    left: cell.c * shared.CELL,
+                    right: cell.c * shared.CELL + shared.CELL,
+                    top: cell.r * shared.CELL,
+                    bottom: cell.r * shared.CELL + shared.CELL
+                });
+            });
+
+            return solids;
+        },
+
         // No onRandomise or onPaint for snake
     };
 

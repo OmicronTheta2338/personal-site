@@ -60,6 +60,7 @@
             id,
             label,
             stepMs: 100,
+            CELL: 12, // Expose CELL size for getSolids to compute cleanly without engine.js dependencies
 
             init(shared) {
                 if (initialised) return;
@@ -118,6 +119,24 @@
             onRandomise(_shared) { randomise(); },
 
             onPaint(col, row, _shared) { current[idx(col, row)] = 1; },
+
+            getSolids() {
+                if (!initialised) return [];
+                const solids = [];
+                for (let row = 0; row < ROWS; row++) {
+                    for (let col = 0; col < COLS; col++) {
+                        if (current[idx(col, row)] > 0) {
+                            solids.push({
+                                left: col * this.CELL,
+                                right: col * this.CELL + this.CELL,
+                                top: row * this.CELL,
+                                bottom: row * this.CELL + this.CELL
+                            });
+                        }
+                    }
+                }
+                return solids;
+            }
         };
     }
 
