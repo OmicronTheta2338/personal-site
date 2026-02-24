@@ -41,66 +41,81 @@
             <!-- ═══════════════════════════════════════════
            ABOUT ME
            ═══════════════════════════════════════════ -->
-            <section class="section" id="about">
-                <h2>About Me</h2>
-                <p>
-                    Hello! This is a placeholder paragraph.
-                </p>
-                <p>
-                    This is another placeholder paragraph.
-                </p>
-                <p>
-                    This is another placeholder paragraph.
-                </p>
-                <p>
-                    This is another placeholder paragraph.
-                </p>
-                <p>
-                    This is another placeholder paragraph.
-                </p>
-                <p>
-                    This is another placeholder paragraph.
-                </p>
-            </section>
+            <div id="view-home" class="page-view">
+                <section class="section" id="about">
+                    <h2>About Me</h2>
+                    <p>
+                        Hello! This is a placeholder paragraph.
+                    </p>
+                    <p>
+                        This is another placeholder paragraph.
+                    </p>
+                    <p>
+                        This is another placeholder paragraph.
+                    </p>
+                    <p>
+                        This is another placeholder paragraph.
+                    </p>
+                    <p>
+                        This is another placeholder paragraph.
+                    </p>
+                    <p>
+                        This is another placeholder paragraph.
+                    </p>
+                </section>
 
-            <!-- ═══════════════════════════════════════════
+                <!-- ═══════════════════════════════════════════
            LINKS
            ═══════════════════════════════════════════ -->
-            <section class="section" id="links">
-                <h2>Links</h2>
-                <ul>
-                    <li><a href="https://github.com/OmicronTheta2338" target="_blank" rel="noopener">GitHub</a> — my
-                        code</li>
-                    <li><a href="https://krussell.uk" target="_blank" rel="noopener">krussell.uk</a> -
-                        word-association-game</li>
-                </ul>
-            </section>
+                <section class="section" id="links">
+                    <h2>Links</h2>
+                    <ul>
+                        <li><a href="https://github.com/OmicronTheta2338" target="_blank" rel="noopener">GitHub</a> — my
+                            code</li>
+                        <li><a href="https://krussell.uk" target="_blank" rel="noopener">krussell.uk</a> -
+                            word-association-game</li>
+                        <li><a href="#puzzles">Puzzles</a> - try out some puzzle games!</li>
+                    </ul>
+                </section>
 
-            <!-- ═══════════════════════════════════════════
+                <!-- ═══════════════════════════════════════════
            PROJECTS
            ═══════════════════════════════════════════ -->
-            <section class="section" id="projects">
-                <h2>Projects</h2>
-                <p>Things I've built or am building:</p>
-                <ul>
-                    <li>
-                        <a href="https://example.com/" target="_blank" rel="noopener">Example Project</a>
-                        — a short description of what it does and why it's interesting.
-                    </li>
+                <section class="section" id="projects">
+                    <h2>Projects</h2>
+                    <p>Things I've built or am building:</p>
+                    <ul>
+                        <li>
+                            <a href="https://example.com/" target="_blank" rel="noopener">Example Project</a>
+                            — a short description of what it does and why it's interesting.
+                        </li>
 
-                </ul>
-            </section>
+                    </ul>
+                </section>
 
-            <!-- ═══════════════════════════════════════════
+                <!-- ═══════════════════════════════════════════
            CONTACT
            ═══════════════════════════════════════════ -->
-            <section class="section" id="contact">
-                <h2>Contact</h2>
-                <p>
-                    The best way to reach me is by email:
-                    <a href="mailto:kameran.russell@gmail.com">kameran.russell@gmail.com</a>
-                </p>
-            </section>
+                <section class="section" id="contact">
+                    <h2>Contact</h2>
+                    <p>
+                        The best way to reach me is by email:
+                        <a href="mailto:kameran.russell@gmail.com">kameran.russell@gmail.com</a>
+                    </p>
+                </section>
+            </div><!-- /#view-home -->
+
+            <!-- ═══════════════════════════════════════════
+           PUZZLES
+           ═══════════════════════════════════════════ -->
+            <div id="view-puzzles" class="page-view" style="display: none;">
+                <section class="section" id="puzzles">
+                    <h2>Puzzles</h2>
+                    <p>
+                        Coming soon!
+                    </p>
+                </section>
+            </div><!-- /#view-puzzles -->
 
             <!-- ═══════════════════════════════════════════
            GOL CONTROLS
@@ -163,6 +178,16 @@
     <script>
         // Stamp the current year in the footer without a build step
         document.getElementById("yr").textContent = new Date().getFullYear();
+
+        // Simple Hash Router
+        function handleRouting() {
+            var hash = window.location.hash;
+            var isPuzzles = hash === '#puzzles';
+            document.getElementById('view-home').style.display = isPuzzles ? 'none' : 'block';
+            document.getElementById('view-puzzles').style.display = isPuzzles ? 'block' : 'none';
+        }
+        window.addEventListener('hashchange', handleRouting);
+        handleRouting(); // Initial routing
     </script>
 
     <!-- Load modes first so window.__modes is populated before engine.js runs.

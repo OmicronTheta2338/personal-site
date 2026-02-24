@@ -166,10 +166,6 @@
 
         activate(shared) {
             heldKey = null;
-            if (shared.canvas) shared.canvas.style.visibility = "hidden";
-            if (shared.ctx && shared.canvas) {
-                shared.ctx.clearRect(0, 0, shared.canvas.width, shared.canvas.height);
-            }
             initSnake(shared);
         },
 
@@ -180,7 +176,6 @@
                 activeLink.el.classList.remove("hover-active");
                 activeLink = null;
             }
-            if (shared.canvas) shared.canvas.style.visibility = "visible";
             if (shared.overlayCtx) {
                 shared.overlayCtx.clearRect(0, 0, shared.canvas.width, shared.canvas.height);
             }
@@ -244,29 +239,22 @@
 
             // Game-over overlay (canvas background)
             if (!snake.alive) {
-                if (shared.canvas) shared.canvas.style.visibility = "visible";
-                const bgCtx = shared.ctx;
-
-                // Overwrite the underlying Game of Life render with solid blank
-                bgCtx.fillStyle = TAN_HEX;
-                bgCtx.fillRect(0, 0, canvas.width, canvas.height);
-
-                bgCtx.fillStyle = "rgba(26,18,9,0.72)";
-                bgCtx.fillRect(0, 0, canvas.width, canvas.height);
+                overlayCtx.fillStyle = "rgba(26,18,9,0.72)";
+                overlayCtx.fillRect(0, 0, canvas.width, canvas.height);
 
                 const cx = canvas.width / 2;
                 const cy = canvas.height / 2;
 
-                bgCtx.fillStyle = TAN_HEX;
-                bgCtx.textAlign = "center";
-                bgCtx.textBaseline = "middle";
-                bgCtx.font = "bold 28px 'Courier New', monospace";
-                bgCtx.fillText("GAME OVER", cx, cy - 32);
-                bgCtx.font = "14px 'Courier New', monospace";
-                bgCtx.fillText("SCORE: " + snake.score, cx, cy);
-                bgCtx.font = "11px 'Courier New', monospace";
-                bgCtx.fillText("[press W/A/S/D to restart]", cx, cy + 28);
-                bgCtx.textAlign = "left";
+                overlayCtx.fillStyle = TAN_HEX;
+                overlayCtx.textAlign = "center";
+                overlayCtx.textBaseline = "middle";
+                overlayCtx.font = "bold 28px 'Courier New', monospace";
+                overlayCtx.fillText("GAME OVER", cx, cy - 32);
+                overlayCtx.font = "14px 'Courier New', monospace";
+                overlayCtx.fillText("SCORE: " + snake.score, cx, cy);
+                overlayCtx.font = "11px 'Courier New', monospace";
+                overlayCtx.fillText("[press W/A/S/D to restart]", cx, cy + 28);
+                overlayCtx.textAlign = "left";
             }
         },
 
@@ -276,9 +264,6 @@
             e.preventDefault();
 
             if (!snake || !snake.alive) {
-                if (shared.ctx && shared.canvas) {
-                    shared.ctx.clearRect(0, 0, shared.canvas.width, shared.canvas.height);
-                }
                 initSnake(shared);
                 heldKey = key;
                 holdStart = performance.now();

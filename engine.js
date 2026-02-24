@@ -102,6 +102,44 @@
             if (isTarget && node.nodeValue.trim().length > 0) textNodes.push(node);
         }
 
+        // Calculate blocking rectangles for open dropdowns
+        var blockingRects = [];
+        if (!isRuleOptsHidden && ruleOpts) {
+            var rect = ruleOpts.getBoundingClientRect();
+            blockingRects.push({
+                left: rect.left + window.scrollX,
+                right: rect.right + window.scrollX,
+                top: rect.top + window.scrollY,
+                bottom: rect.bottom + window.scrollY
+            });
+        }
+        if (!isOverlayOptsHidden && overlayOpts) {
+            var rect = overlayOpts.getBoundingClientRect();
+            blockingRects.push({
+                left: rect.left + window.scrollX,
+                right: rect.right + window.scrollX,
+                top: rect.top + window.scrollY,
+                bottom: rect.bottom + window.scrollY
+            });
+        }
+
+        function isObscured(r) {
+            var rLeft = r.left + window.scrollX;
+            var rRight = r.right + window.scrollX;
+            var rTop = r.top + window.scrollY;
+            var rBottom = r.bottom + window.scrollY;
+
+            for (var j = 0; j < blockingRects.length; j++) {
+                var b = blockingRects[j];
+                // Check if the rectangle intersects with the blocking rectangle
+                if (rLeft < b.right && rRight > b.left &&
+                    rTop < b.bottom && rBottom > b.top) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         var range = document.createRange();
         for (var i = 0; i < textNodes.length; i++) {
             var tn = textNodes[i];
@@ -112,6 +150,23 @@
                 range.setEnd(tn, c + 1);
                 var r = range.getBoundingClientRect();
                 if (r.width > 0 && r.height > 0) {
+                    // Check if the character is obscured by an open dropdown
+                    if (isObscured(r)) {
+                        // If it's part of an active dropdown menu option, we still want it to be collidable!
+                        // Wait, dropdown text nodes were already excluded from `textNodes` if they belong to the dropdown itself.
+                        // Actually, wait: `if (isRuleOptsHidden && ruleOpts.contains(parent)) continue;` handles hidden.
+                        // If it's NOT hidden, the dropdown text nodes DO get into `textNodes`.
+                        // If we blanket block them here, they will block themselves!
+
+                        // Let's check if the parent is inside the blocking dropdown itself.
+                        var parent = tn.parentElement;
+                        var isInsideDropdown = (!isRuleOptsHidden && ruleOpts && ruleOpts.contains(parent)) ||
+                            (!isOverlayOptsHidden && overlayOpts && overlayOpts.contains(parent));
+
+                        if (!isInsideDropdown) {
+                            continue; // Skip this character
+                        }
+                    }
                     shared.textColliders.push({
                         left: r.left + window.scrollX,
                         right: r.right + window.scrollX,
@@ -130,6 +185,13 @@
             if (el.tagName.toLowerCase() === 'li' && el.parentElement.id === 'overlay-options' && isOverlayOptsHidden) continue;
             var r = el.getBoundingClientRect();
             if (r.width > 0 && r.height > 0) {
+                var isInsideDropdown = (!isRuleOptsHidden && ruleOpts && ruleOpts.contains(el)) ||
+                    (!isOverlayOptsHidden && overlayOpts && overlayOpts.contains(el));
+
+                if (isObscured(r) && !isInsideDropdown) {
+                    continue; // Skip this link if it's obscured by the dropdown
+                }
+
                 shared.linkElements.push({
                     el: el,
                     left: r.left + window.scrollX,
@@ -146,6 +208,7 @@
     };
 
     window.addEventListener('resize', buildCharacterColliders);
+    window.addEventListener('hashchange', shared.updateColliders);
     document.addEventListener('click', buildCharacterColliders);
     const rt_toggle = document.getElementById('rule-toggle');
     const ot_toggle = document.getElementById('overlay-toggle');
@@ -187,6 +250,13 @@
     // Initialise all modes once, then activate the first
     MODES.forEach(m => { if (m.init) m.init(shared); });
     selectMode(MODES[0].id); // Defaults to Game of Life since Platformer was removed from the list
+
+    // Run the simulation for 50 iterations while loading
+    if (currentMode && currentMode.step) {
+        for (let i = 0; i < 75; i++) {
+            currentMode.step(shared);
+        }
+    }
 
     /* ── Main loop ───────────────────────────────────────────── */
     let lastStep = 0;
