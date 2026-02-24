@@ -160,7 +160,8 @@ body {
   border-right: none;
 }
 
-#site-nav a:hover {
+#site-nav a:hover,
+#site-nav a.hover-active {
   background: var(--black);
   color: var(--tan);
 }
@@ -206,7 +207,8 @@ body {
   text-decoration: underline;
 }
 
-.section a:hover {
+.section a:hover,
+.section a.hover-active {
   background: var(--black);
   color: var(--tan);
 }
@@ -224,13 +226,15 @@ body {
 
 #gol-controls {
   border-top: var(--border);
-  padding-bottom: 5px;
+  padding-bottom: 0px;
   /* compress space between the two rows */
 }
 
 #overlay-controls {
   padding-top: 5px;
   justify-content: space-between;
+  position: relative;
+  z-index: 1000;
 }
 
 /* Make hint take up remaining space on the left */
@@ -256,7 +260,8 @@ button {
   transition: background 0.08s, color 0.08s;
 }
 
-button:hover {
+button:hover,
+button.hover-active {
   background: var(--tan);
   color: var(--black);
 }
@@ -299,7 +304,8 @@ button:hover {
 }
 
 .select-options li:hover,
-.select-options li.selected {
+.select-options li.selected,
+.select-options li.hover-active {
   background: var(--tan);
   color: var(--black);
 }

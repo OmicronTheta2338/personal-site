@@ -27,6 +27,7 @@
     let snake = null;
     let heldKey = null;
     let holdStart = 0;
+    let activeLink = null;
 
     /* ── Wall check ──────────────────────────────────────────── */
     function isWall(c, r, shared) {
@@ -100,13 +101,28 @@
         const right = left + CELL;
         const bottom = top + CELL;
 
-        for (let i = 0; i < linkElements.length; i++) {
+        let newActiveLink = null;
+        let matchedClick = false;
+        for (let i = linkElements.length - 1; i >= 0; i--) {
             const l = linkElements[i];
-            // Use same bounding box as isWall to avoid adjacent false triggers
-            if (left + 2 < l.right && right - 2 > l.left &&
-                top + 2 < l.bottom && bottom - 2 > l.top) {
+
+            // Highlight checking (slightly larger bounds for hovering feel)
+            const isHovering = (left + 6 < l.right && right - 6 > l.left && top + 6 < l.bottom && bottom - 6 > l.top);
+            if (isHovering && !newActiveLink) newActiveLink = l;
+
+            // Bumping/clicking check (stricter bounds)
+            const isBumping = (left + 2 < l.right && right - 2 > l.left && top + 2 < l.bottom && bottom - 2 > l.top);
+
+            if (isBumping && !matchedClick) {
                 l.el.click();
+                matchedClick = true;
             }
+        }
+
+        if (activeLink !== newActiveLink) {
+            if (activeLink) activeLink.el.classList.remove("hover-active");
+            if (newActiveLink) newActiveLink.el.classList.add("hover-active");
+            activeLink = newActiveLink;
         }
     }
 
@@ -132,6 +148,10 @@
         deactivate(shared) {
             heldKey = null;
             snake = null;
+            if (activeLink) {
+                activeLink.el.classList.remove("hover-active");
+                activeLink = null;
+            }
             if (shared.canvas) shared.canvas.style.visibility = "visible";
             if (shared.overlayCtx) {
                 shared.overlayCtx.clearRect(0, 0, shared.canvas.width, shared.canvas.height);

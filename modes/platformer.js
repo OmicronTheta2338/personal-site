@@ -203,8 +203,7 @@
             }
 
             if (activeLink) {
-                activeLink.el.style.background = "";
-                activeLink.el.style.color = "";
+                activeLink.el.classList.remove("hover-active");
                 activeLink = null;
             }
             window.removeEventListener('blur', clearInputs);
@@ -266,7 +265,7 @@
             // Link interactions
             var newActiveLink = null;
             if (!shared.columnHidden) {
-                for (var i = 0; i < shared.linkElements.length; i++) {
+                for (var i = shared.linkElements.length - 1; i >= 0; i--) {
                     var l = shared.linkElements[i];
                     if (intersectLink(px, py, l)) {
                         newActiveLink = l;
@@ -277,12 +276,10 @@
 
             if (activeLink !== newActiveLink) {
                 if (activeLink) {
-                    activeLink.el.style.background = "";
-                    activeLink.el.style.color = "";
+                    activeLink.el.classList.remove("hover-active");
                 }
                 if (newActiveLink) {
-                    newActiveLink.el.style.background = "var(--black)";
-                    newActiveLink.el.style.color = "var(--tan)";
+                    newActiveLink.el.classList.add("hover-active");
                 }
                 activeLink = newActiveLink;
             }
@@ -345,8 +342,15 @@
                     if (action === "jump" || action === "up") {
                         jumpBuffer = 8;
                     }
-                    if (action === "enter" && activeLink) {
-                        activeLink.el.click();
+                    if (action === "enter") {
+                        // Un-focus any open dropdowns regardless of hover state
+                        document.body.click();
+
+                        if (activeLink) {
+                            var toClick = activeLink.el;
+                            // Give the DOM a tiny bit of time before clicking the selected item
+                            setTimeout(function () { toClick.click(); }, 10);
+                        }
                     }
                 }
 

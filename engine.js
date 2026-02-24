@@ -81,17 +81,20 @@
     /* ── Shared colliders for overlay modes ──────────────────── */
     function buildCharacterColliders() {
         shared.textColliders = [];
-        var elems = document.querySelectorAll('#site-header h1, #site-header p, #site-nav a, .section h2, .section p, .section li, #contact p, #gol-controls, #site-footer');
+        var elems = document.querySelectorAll('#site-header h1, #site-header p, #site-nav a, .section h2, .section p, .section li, #contact p, #gol-controls, #overlay-controls, #site-footer, #randomise-btn');
         var textNodes = [];
 
         var walk = document.createTreeWalker(document.getElementById("column"), NodeFilter.SHOW_TEXT, null, false);
         var ruleOpts = document.getElementById("rule-options");
+        var overlayOpts = document.getElementById("overlay-options");
         var isRuleOptsHidden = ruleOpts ? ruleOpts.hidden : true;
+        var isOverlayOptsHidden = overlayOpts ? overlayOpts.hidden : true;
         var node;
 
         while (node = walk.nextNode()) {
             var parent = node.parentElement;
             if (isRuleOptsHidden && ruleOpts && ruleOpts.contains(parent)) continue;
+            if (isOverlayOptsHidden && overlayOpts && overlayOpts.contains(parent)) continue;
             var isTarget = false;
             for (var i = 0; i < elems.length; i++) {
                 if (elems[i].contains(parent)) { isTarget = true; break; }
@@ -120,10 +123,11 @@
         }
 
         shared.linkElements = [];
-        var links = document.querySelectorAll('#column a, #rule-toggle, #rule-options li');
+        var links = document.querySelectorAll('#column a, #rule-toggle, #overlay-toggle, #rule-options li, #overlay-options li, #randomise-btn');
         for (var i = 0; i < links.length; i++) {
             var el = links[i];
             if (el.tagName.toLowerCase() === 'li' && el.parentElement.id === 'rule-options' && isRuleOptsHidden) continue;
+            if (el.tagName.toLowerCase() === 'li' && el.parentElement.id === 'overlay-options' && isOverlayOptsHidden) continue;
             var r = el.getBoundingClientRect();
             if (r.width > 0 && r.height > 0) {
                 shared.linkElements.push({
@@ -144,7 +148,9 @@
     window.addEventListener('resize', buildCharacterColliders);
     document.addEventListener('click', buildCharacterColliders);
     const rt_toggle = document.getElementById('rule-toggle');
+    const ot_toggle = document.getElementById('overlay-toggle');
     if (rt_toggle) rt_toggle.addEventListener('click', shared.updateColliders);
+    if (ot_toggle) ot_toggle.addEventListener('click', shared.updateColliders);
 
     /* ── Mode management ─────────────────────────────────────── */
     let currentMode = null;
@@ -327,6 +333,8 @@
             overlayOpts.hidden = true;
             if (overlayToggle) overlayToggle.setAttribute("aria-expanded", "false");
         }
+        // Wait for the DOM to update before rebuilding colliders
+        setTimeout(shared.updateColliders, 10);
     });
 
 })();
