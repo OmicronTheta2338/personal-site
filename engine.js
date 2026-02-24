@@ -29,6 +29,8 @@
     /* ── DOM ─────────────────────────────────────────────────── */
     const canvas = document.getElementById("life-canvas");
     const ctx = canvas.getContext("2d");
+    const overlayCanvas = document.getElementById("overlay-canvas");
+    const overlayCtx = overlayCanvas ? overlayCanvas.getContext("2d") : null;
     const column = document.getElementById("column");
     const rndBtn = document.getElementById("randomise-btn");
     const ruleToggle = document.getElementById("rule-toggle");
@@ -40,6 +42,10 @@
     const ROWS = Math.ceil((column.offsetHeight + 10 * CELL) / CELL);
     canvas.width = COLS * CELL;
     canvas.height = ROWS * CELL;
+    if (overlayCanvas) {
+        overlayCanvas.width = canvas.width;
+        overlayCanvas.height = canvas.height;
+    }
 
     /* ── Column bounds (cells) ───────────────────────────────── */
     const COL_PX_W = column.offsetWidth;
@@ -52,7 +58,8 @@
 
     /* ── Shared context (passed by reference to every mode call) */
     const shared = {
-        canvas, ctx,
+        canvas, ctx, overlayCanvas, overlayCtx,
+        textColliders: [], linkElements: [],
         CELL, COLS, ROWS,
         TAN_HEX, BLACK_HEX,
         COL_LEFT_CELL, COL_RIGHT_CELL,
@@ -66,6 +73,74 @@
         shared.columnHidden = !shared.columnHidden;
         column.classList.toggle("col-hidden", shared.columnHidden);
     }
+
+    /* ── Shared colliders for overlay modes ──────────────────── */
+    function buildCharacterColliders() {
+        shared.textColliders = [];
+        var elems = document.querySelectorAll('#site-header h1, #site-header p, #site-nav a, .section h2, .section p, .section li, #contact p, #gol-controls, #site-footer');
+        var textNodes = [];
+
+        var walk = document.createTreeWalker(document.getElementById("column"), NodeFilter.SHOW_TEXT, null, false);
+        var ruleOpts = document.getElementById("rule-options");
+        var isRuleOptsHidden = ruleOpts ? ruleOpts.hidden : true;
+        var node;
+
+        while (node = walk.nextNode()) {
+            var parent = node.parentElement;
+            if (isRuleOptsHidden && ruleOpts && ruleOpts.contains(parent)) continue;
+            var isTarget = false;
+            for (var i = 0; i < elems.length; i++) {
+                if (elems[i].contains(parent)) { isTarget = true; break; }
+            }
+            if (isTarget && node.nodeValue.trim().length > 0) textNodes.push(node);
+        }
+
+        var range = document.createRange();
+        for (var i = 0; i < textNodes.length; i++) {
+            var tn = textNodes[i];
+            var len = tn.nodeValue.length;
+            for (var c = 0; c < len; c++) {
+                if (tn.nodeValue[c].trim() === '') continue;
+                range.setStart(tn, c);
+                range.setEnd(tn, c + 1);
+                var r = range.getBoundingClientRect();
+                if (r.width > 0 && r.height > 0) {
+                    shared.textColliders.push({
+                        left: r.left + window.scrollX,
+                        right: r.right + window.scrollX,
+                        top: r.top + window.scrollY,
+                        bottom: r.bottom + window.scrollY
+                    });
+                }
+            }
+        }
+
+        shared.linkElements = [];
+        var links = document.querySelectorAll('#column a, #rule-toggle, #rule-options li');
+        for (var i = 0; i < links.length; i++) {
+            var el = links[i];
+            if (el.tagName.toLowerCase() === 'li' && el.parentElement.id === 'rule-options' && isRuleOptsHidden) continue;
+            var r = el.getBoundingClientRect();
+            if (r.width > 0 && r.height > 0) {
+                shared.linkElements.push({
+                    el: el,
+                    left: r.left + window.scrollX,
+                    right: r.right + window.scrollX,
+                    top: r.top + window.scrollY,
+                    bottom: r.bottom + window.scrollY
+                });
+            }
+        }
+    }
+
+    shared.updateColliders = function () {
+        setTimeout(buildCharacterColliders, 10);
+    };
+
+    window.addEventListener('resize', buildCharacterColliders);
+    document.addEventListener('click', buildCharacterColliders);
+    const rt_toggle = document.getElementById('rule-toggle');
+    if (rt_toggle) rt_toggle.addEventListener('click', shared.updateColliders);
 
     /* ── Mode management ─────────────────────────────────────── */
     let currentMode = null;
@@ -81,17 +156,28 @@
     }
 
     const platformerCheckbox = document.getElementById("platformer-toggle");
+    const snakeCheckbox = document.getElementById("snake-toggle");
+
+    function setOverlayMode(modeId, checkbox) {
+        if (overlayMode && overlayMode.deactivate) overlayMode.deactivate(shared);
+
+        if (checkbox && checkbox.checked) {
+            if (checkbox === platformerCheckbox && snakeCheckbox) snakeCheckbox.checked = false;
+            if (checkbox === snakeCheckbox && platformerCheckbox) platformerCheckbox.checked = false;
+
+            overlayMode = MODES.find(m => m.id === modeId);
+            buildCharacterColliders();
+            if (overlayMode && overlayMode.activate) overlayMode.activate(shared);
+        } else {
+            overlayMode = null;
+        }
+    }
+
     if (platformerCheckbox) {
-        const platformer = MODES.find(m => m.id === "platformer");
-        platformerCheckbox.addEventListener("change", (e) => {
-            if (e.target.checked) {
-                overlayMode = platformer;
-                if (overlayMode && overlayMode.activate) overlayMode.activate(shared);
-            } else {
-                if (overlayMode && overlayMode.deactivate) overlayMode.deactivate(shared);
-                overlayMode = null;
-            }
-        });
+        platformerCheckbox.addEventListener("change", (e) => setOverlayMode("platformer", e.target));
+    }
+    if (snakeCheckbox) {
+        snakeCheckbox.addEventListener("change", (e) => setOverlayMode("snake", e.target));
     }
 
     // Initialise all modes once, then activate the first

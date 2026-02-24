@@ -11,11 +11,9 @@
 
 <body>
 
-    <!--
-    The canvas is position:absolute so it sits behind everything.
-    Its dimensions are set by life.js after layout is complete.
-  -->
     <canvas id="life-canvas" aria-hidden="true"></canvas>
+    <canvas id="overlay-canvas" aria-hidden="true"
+        style="position: absolute; top: 0; left: 0; z-index: 999; pointer-events: none;"></canvas>
 
     <!-- Scrollable page wrapper; centres the column -->
     <div id="page">
@@ -30,13 +28,23 @@
                     <h1>Kameran Russell</h1>
                     <p class="tagline">// Hello there! //</p>
                 </div>
-                <div id="platformer-toggle-container"
-                    style="display: flex; flex-direction: column; align-items: flex-end; margin-left: auto;">
-                    <label style="font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                        <input type="checkbox" id="platformer-toggle" autocomplete="off">
-                        Platformer Controls
-                    </label>
-                    <span style="font-size: 0.75rem; opacity: 0.7;">A/D to move; W to jump; Enter to click</span>
+                <div id="overlays-toggle-container" style="display: flex; gap: 16px; margin-left: auto;">
+                    <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                        <label
+                            style="font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            <input type="checkbox" id="platformer-toggle" autocomplete="off">
+                            Platformer Controls
+                        </label>
+                        <span style="font-size: 0.75rem; opacity: 0.7;">A/D to move; W to jump; Enter to click</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                        <label
+                            style="font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            <input type="checkbox" id="snake-toggle" autocomplete="off">
+                            Snake Controls
+                        </label>
+                        <span style="font-size: 0.75rem; opacity: 0.7;">W/A/S/D to steer; bump links to click</span>
+                    </div>
                 </div>
             </header>
 
@@ -120,7 +128,6 @@
                         <li role="option" data-value="rake">Rake</li>
                         <li role="option" data-value="bombers">Bombers</li>
                         <li role="option" data-value="sedimental">SediMental</li>
-                        <li role="option" data-value="snake">Snake</li>
                         <li role="option" data-value="minesweeper">Minesweeper</li>
                     </ul>
                 </div>

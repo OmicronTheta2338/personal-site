@@ -30,15 +30,27 @@
 
     /* ── Wall check ──────────────────────────────────────────── */
     function isWall(c, r, shared) {
-        const { COLS, ROWS, COL_LEFT_CELL, COL_RIGHT_CELL,
-            COL_TOP_CELL, COL_BOTTOM_CELL, columnHidden } = shared;
+        const { COLS, ROWS, CELL, textColliders, columnHidden } = shared;
 
+        // Canvas boundaries
         if (c < 0 || c >= COLS || r < 0 || r >= ROWS) return true;
 
-        if (!columnHidden &&
-            c >= COL_LEFT_CELL && c < COL_RIGHT_CELL &&
-            r >= COL_TOP_CELL && r < COL_BOTTOM_CELL) return true;
+        // Word collision
+        if (!columnHidden && textColliders) {
+            const left = c * CELL;
+            const top = r * CELL;
+            const right = left + CELL;
+            const bottom = top + CELL;
 
+            // Allow ~2px margin of forgiveness inside the cell
+            for (let i = 0; i < textColliders.length; i++) {
+                const tc = textColliders[i];
+                if (left + 2 < tc.right && right - 2 > tc.left &&
+                    top + 2 < tc.bottom && bottom - 2 > tc.top) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -58,9 +70,12 @@
 
     /* ── Init / restart ──────────────────────────────────────── */
     function initSnake(shared) {
-        const { COL_LEFT_CELL, ROWS } = shared;
-        const sc = Math.max(3, Math.floor(COL_LEFT_CELL / 2));
-        const sr = Math.floor(ROWS / 2);
+        const { COLS, CELL } = shared;
+
+        // start near the middle-top, where there's usually space
+        const sc = Math.floor(COLS / 2);
+        const sr = Math.floor((window.scrollY + 200) / CELL);
+
         const body = [
             { c: sc, r: sr },
             { c: sc - 1, r: sr },
@@ -74,6 +89,25 @@
             alive: true,
             score: 0,
         };
+    }
+
+    /* ── Link intersection ───────────────────────────────────── */
+    function checkLinkIntersection(c, r, shared) {
+        if (shared.columnHidden || !shared.linkElements) return;
+        const { CELL, linkElements } = shared;
+        const left = c * CELL;
+        const top = r * CELL;
+        const right = left + CELL;
+        const bottom = top + CELL;
+
+        for (let i = 0; i < linkElements.length; i++) {
+            const l = linkElements[i];
+            // Provide a generous bounding box to ensure it triggers
+            if (left < l.right + 4 && right > l.left - 4 &&
+                top < l.bottom + 4 && bottom > l.top - 4) {
+                l.el.click();
+            }
+        }
     }
 
     /* ── Mode object — registered into global mode list ─────── */
@@ -91,12 +125,17 @@
 
         activate(shared) {
             heldKey = null;
+            if (shared.canvas) shared.canvas.style.visibility = "hidden";
             initSnake(shared);
         },
 
-        deactivate() {
+        deactivate(shared) {
             heldKey = null;
             snake = null;
+            if (shared.canvas) shared.canvas.style.visibility = "visible";
+            if (shared.overlayCtx) {
+                shared.overlayCtx.clearRect(0, 0, shared.canvas.width, shared.canvas.height);
+            }
         },
 
         step(shared) {
@@ -118,51 +157,59 @@
             } else {
                 snake.body.pop();
             }
+
+            checkLinkIntersection(newHead.c, newHead.r, shared);
+
+            // Screen scrolling
+            const { CELL } = shared;
+            const headY = newHead.r * CELL;
+            const screenY = headY - window.scrollY;
+            if (screenY < 150) window.scrollBy(0, screenY - 150);
+            if (screenY > window.innerHeight - 150) window.scrollBy(0, screenY - (window.innerHeight - 150));
         },
 
         render(shared) {
-            const { ctx, canvas, TAN_HEX, BLACK_HEX, CELL,
-                COL_LEFT_CELL, ROWS, columnHidden } = shared;
+            const { overlayCtx, canvas, TAN_HEX, BLACK_HEX, CELL } = shared;
 
-            ctx.fillStyle = TAN_HEX;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            if (!overlayCtx) return;
+            overlayCtx.clearRect(0, 0, canvas.width, canvas.height);
+
             if (!snake) return;
 
             // Apple
-            ctx.fillStyle = RED_HEX;
-            ctx.fillRect(snake.apple.c * CELL, snake.apple.r * CELL, CELL, CELL);
+            overlayCtx.fillStyle = RED_HEX;
+            overlayCtx.fillRect(snake.apple.c * CELL, snake.apple.r * CELL, CELL, CELL);
 
             // Snake body
             snake.body.forEach((cell, i) => {
-                ctx.fillStyle = i === 0 ? HEAD_HEX : BLACK_HEX;
-                ctx.fillRect(cell.c * CELL, cell.r * CELL, CELL, CELL);
+                overlayCtx.fillStyle = i === 0 ? HEAD_HEX : BLACK_HEX;
+                overlayCtx.fillRect(cell.c * CELL, cell.r * CELL, CELL, CELL);
             });
 
             // Score
-            ctx.fillStyle = BLACK_HEX;
-            ctx.font = "bold 13px 'Courier New', monospace";
-            ctx.textBaseline = "top";
-            ctx.textAlign = "left";
-            ctx.fillText("SCORE: " + snake.score, 8, 8);
+            overlayCtx.fillStyle = BLACK_HEX;
+            overlayCtx.font = "bold 13px 'Courier New', monospace";
+            overlayCtx.textBaseline = "top";
+            overlayCtx.textAlign = "left";
+            // Make score follow camera
+            overlayCtx.fillText("SCORE: " + snake.score, 12, window.scrollY + 12);
 
             // Game-over overlay
             if (!snake.alive) {
-                ctx.fillStyle = "rgba(26,18,9,0.55)";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                const cx = columnHidden
-                    ? canvas.width / 2
-                    : (COL_LEFT_CELL / 2) * CELL;
-                const cy = Math.floor(ROWS / 2) * CELL;
-                ctx.fillStyle = TAN_HEX;
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.font = "bold 20px 'Courier New', monospace";
-                ctx.fillText("GAME OVER", cx, cy - 26);
-                ctx.font = "14px 'Courier New', monospace";
-                ctx.fillText("SCORE: " + snake.score, cx, cy);
-                ctx.font = "11px 'Courier New', monospace";
-                ctx.fillText("[press W/A/S/D to restart]", cx, cy + 22);
-                ctx.textAlign = "left";
+                overlayCtx.fillStyle = "rgba(26,18,9,0.55)";
+                overlayCtx.fillRect(0, 0, canvas.width, canvas.height);
+                const cx = canvas.width / 2;
+                const cy = window.scrollY + (window.innerHeight / 2);
+                overlayCtx.fillStyle = TAN_HEX;
+                overlayCtx.textAlign = "center";
+                overlayCtx.textBaseline = "middle";
+                overlayCtx.font = "bold 20px 'Courier New', monospace";
+                overlayCtx.fillText("GAME OVER", cx, cy - 26);
+                overlayCtx.font = "14px 'Courier New', monospace";
+                overlayCtx.fillText("SCORE: " + snake.score, cx, cy);
+                overlayCtx.font = "11px 'Courier New', monospace";
+                overlayCtx.fillText("[press W/A/S/D to restart]", cx, cy + 22);
+                overlayCtx.textAlign = "left";
             }
         },
 

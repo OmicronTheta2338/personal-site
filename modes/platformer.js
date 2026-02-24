@@ -36,9 +36,6 @@
     var WALL_JUMP_SPEED_Y = -8;
     var WALL_SLIDE_SPEED = 2.5;
 
-    // Cache for colliders so we don't compute getBoundingClientRect every frame
-    var cachedColliders = [];
-    var linkElements = [];
     var activeLink = null;
 
     function clearInputs() {
@@ -46,91 +43,8 @@
         jumpBuffer = 0;
     }
 
-    function buildCharacterCollidersDelayed() {
-        setTimeout(buildCharacterColliders, 10);
-    }
-
-    function buildCharacterColliders() {
-        cachedColliders = [];
-
-        // 1. Gather all text nodes within our target elements
-        var elems = document.querySelectorAll('#site-header h1, #site-header p, #site-nav a, .section h2, .section p, .section li, #contact p, #gol-controls, #site-footer');
-        var textNodes = [];
-
-        var walk = document.createTreeWalker(document.getElementById("column"), NodeFilter.SHOW_TEXT, null, false);
-        var ruleOpts = document.getElementById("rule-options");
-        var isRuleOptsHidden = ruleOpts ? ruleOpts.hidden : true;
-        var node;
-
-        while (node = walk.nextNode()) {
-            var parent = node.parentElement;
-
-            // Skip dropdown options if the dropdown is currently hidden
-            if (isRuleOptsHidden && ruleOpts && ruleOpts.contains(parent)) {
-                continue;
-            }
-
-            var isTarget = false;
-            for (var i = 0; i < elems.length; i++) {
-                if (elems[i].contains(parent)) {
-                    isTarget = true;
-                    break;
-                }
-            }
-            if (isTarget && node.nodeValue.trim().length > 0) {
-                textNodes.push(node);
-            }
-        }
-
-        // 2. Build bounding boxes for each character
-        var range = document.createRange();
-        for (var i = 0; i < textNodes.length; i++) {
-            var tn = textNodes[i];
-            var len = tn.nodeValue.length;
-            for (var c = 0; c < len; c++) {
-                // skip whitespace to create gaps between words
-                if (tn.nodeValue[c].trim() === '') continue;
-
-                range.setStart(tn, c);
-                range.setEnd(tn, c + 1);
-                var r = range.getBoundingClientRect();
-
-                if (r.width > 0 && r.height > 0) {
-                    cachedColliders.push({
-                        left: r.left + window.scrollX,
-                        right: r.right + window.scrollX,
-                        top: r.top + window.scrollY,
-                        bottom: r.bottom + window.scrollY
-                    });
-                }
-            }
-        }
-
-        // 3. Cache links separately for hover interaction
-        linkElements = [];
-        // include the rule toggle button and the options in the dropdown so they can be clicked
-        var links = document.querySelectorAll('#column a, #rule-toggle, #rule-options li');
-        for (var i = 0; i < links.length; i++) {
-            var el = links[i];
-            // skip hidden rule options unless the rule menu is open
-            if (el.tagName.toLowerCase() === 'li' && el.parentElement.id === 'rule-options' && isRuleOptsHidden) {
-                continue;
-            }
-            var r = el.getBoundingClientRect();
-            if (r.width > 0 && r.height > 0) {
-                linkElements.push({
-                    el: el,
-                    left: r.left + window.scrollX,
-                    right: r.right + window.scrollX,
-                    top: r.top + window.scrollY,
-                    bottom: r.bottom + window.scrollY
-                });
-            }
-        }
-    }
-
     function getColliders(shared) {
-        var colliders = shared.columnHidden ? [] : cachedColliders.slice();
+        var colliders = shared.columnHidden ? [] : shared.textColliders.slice();
 
         // Retrieve dynamic solid logic from the active main mode (like CA, Snake or Minesweeper)
         if (shared.currentMode && shared.currentMode.getSolids && shared.currentMode !== platformerMode) {
@@ -271,14 +185,7 @@
             }
             document.getElementById("platformer-player").style.display = "block";
 
-            // Build text character colliders once when activated (rebuild if menu toggles)
-            buildCharacterColliders();
-            window.addEventListener('resize', buildCharacterColliders);
             window.addEventListener('blur', clearInputs);
-            document.addEventListener('click', buildCharacterColliders);
-
-            var rt = document.getElementById('rule-toggle');
-            if (rt) rt.addEventListener('click', buildCharacterCollidersDelayed);
 
             px = shared.canvas.width / 2;
             py = Math.max(100, window.scrollY + 100);
@@ -300,14 +207,7 @@
                 activeLink.el.style.color = "";
                 activeLink = null;
             }
-            cachedColliders = [];
-            linkElements = [];
-            window.removeEventListener('resize', buildCharacterColliders);
             window.removeEventListener('blur', clearInputs);
-            document.removeEventListener('click', buildCharacterColliders);
-
-            var rt = document.getElementById('rule-toggle');
-            if (rt) rt.removeEventListener('click', buildCharacterCollidersDelayed);
         },
 
         step: function (shared) {
@@ -366,8 +266,8 @@
             // Link interactions
             var newActiveLink = null;
             if (!shared.columnHidden) {
-                for (var i = 0; i < linkElements.length; i++) {
-                    var l = linkElements[i];
+                for (var i = 0; i < shared.linkElements.length; i++) {
+                    var l = shared.linkElements[i];
                     if (intersectLink(px, py, l)) {
                         newActiveLink = l;
                         break;
