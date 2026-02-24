@@ -55,6 +55,13 @@
 
         // Active mode solid collision (Game of Life pixels)
         if (shared.currentMode && shared.currentMode.getSolids) {
+            // Optimization: if it's behind the column, it isn't an obstacle
+            if (!shared.columnHidden &&
+                c >= shared.COL_LEFT_CELL && c < shared.COL_RIGHT_CELL &&
+                r >= shared.COL_TOP_CELL && r < shared.COL_BOTTOM_CELL) {
+                return false;
+            }
+
             const left = c * CELL;
             const top = r * CELL;
             const right = left + CELL;
@@ -223,7 +230,8 @@
 
             // Snake body
             snake.body.forEach((cell, i) => {
-                overlayCtx.fillStyle = i === 0 ? HEAD_HEX : BLACK_HEX;
+                const isHead = (i === 0);
+                overlayCtx.fillStyle = snake.alive ? (isHead ? "#2a9d45" : "#40d060") : TAN_HEX;
                 overlayCtx.fillRect(cell.c * CELL, cell.r * CELL, CELL, CELL);
             });
 
