@@ -211,18 +211,31 @@ body {
   color: var(--tan);
 }
 
-/* ── GoL controls strip ──────────────────────────────────── */
-#gol-controls {
+/* ── GoL & Overlay controls strip ──────────────────────────────────── */
+#gol-controls,
+#overlay-controls {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 10px 24px;
-  border-top: var(--border);
   background: var(--tan);
   gap: 12px;
 }
 
-#gol-controls label {
+#gol-controls {
+  border-top: var(--border);
+  padding-bottom: 5px;
+  /* compress space between the two rows */
+}
+
+#overlay-controls {
+  padding-top: 5px;
+  justify-content: space-between;
+}
+
+/* Make hint take up remaining space on the left */
+#gol-controls>span,
+#overlay-controls>span {
   font-size: 0.78rem;
   letter-spacing: 0.06em;
   opacity: 0.7;

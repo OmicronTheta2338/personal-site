@@ -36,6 +36,10 @@
     const ruleToggle = document.getElementById("rule-toggle");
     const ruleLabel = document.getElementById("rule-label");
     const ruleOpts = document.getElementById("rule-options");
+    const overlayToggle = document.getElementById("overlay-toggle");
+    const overlayLabel = document.getElementById("overlay-label");
+    const overlayOpts = document.getElementById("overlay-options");
+    const overlayHint = document.getElementById("overlay-hint");
 
     /* ── Grid (fixed at load) ────────────────────────────────── */
     const COLS = Math.ceil(window.innerWidth / CELL);
@@ -155,29 +159,23 @@
         if (currentMode.activate) currentMode.activate(shared);
     }
 
-    const platformerCheckbox = document.getElementById("platformer-toggle");
-    const snakeCheckbox = document.getElementById("snake-toggle");
-
-    function setOverlayMode(modeId, checkbox) {
+    function setOverlayMode(modeId) {
         if (overlayMode && overlayMode.deactivate) overlayMode.deactivate(shared);
 
-        if (checkbox && checkbox.checked) {
-            if (checkbox === platformerCheckbox && snakeCheckbox) snakeCheckbox.checked = false;
-            if (checkbox === snakeCheckbox && platformerCheckbox) platformerCheckbox.checked = false;
-
+        if (modeId === "none") {
+            overlayMode = null;
+            overlayHint.textContent = "none active";
+        } else {
             overlayMode = MODES.find(m => m.id === modeId);
             buildCharacterColliders();
             if (overlayMode && overlayMode.activate) overlayMode.activate(shared);
-        } else {
-            overlayMode = null;
-        }
-    }
 
-    if (platformerCheckbox) {
-        platformerCheckbox.addEventListener("change", (e) => setOverlayMode("platformer", e.target));
-    }
-    if (snakeCheckbox) {
-        snakeCheckbox.addEventListener("change", (e) => setOverlayMode("snake", e.target));
+            if (modeId === "platformer") {
+                overlayHint.textContent = "A/D to move; W to jump; Enter to click";
+            } else if (modeId === "snake") {
+                overlayHint.textContent = "W/A/S/D to steer; bump links to click";
+            }
+        }
     }
 
     // Initialise all modes once, then activate the first
@@ -297,9 +295,38 @@
         ruleToggle.setAttribute("aria-expanded", "false");
     });
 
-    document.addEventListener("click", function () {
+    if (overlayToggle && overlayOpts) {
+        overlayToggle.addEventListener("click", e => {
+            e.stopPropagation();
+            const open = !overlayOpts.hidden;
+            overlayOpts.hidden = open;
+            overlayToggle.setAttribute("aria-expanded", String(!open));
+
+            // Auto-close the other dropdown if open
+            ruleOpts.hidden = true;
+            ruleToggle.setAttribute("aria-expanded", "false");
+        });
+
+        overlayOpts.addEventListener("click", e => {
+            const li = e.target.closest("li");
+            if (!li) return;
+            setOverlayMode(li.dataset.value);
+            overlayLabel.textContent = li.textContent.trim();
+            overlayOpts.querySelectorAll("li").forEach(el =>
+                el.classList.toggle("selected", el === li)
+            );
+            overlayOpts.hidden = true;
+            overlayToggle.setAttribute("aria-expanded", "false");
+        });
+    }
+
+    document.addEventListener("click", function (e) {
         ruleOpts.hidden = true;
         ruleToggle.setAttribute("aria-expanded", "false");
+        if (overlayOpts) {
+            overlayOpts.hidden = true;
+            if (overlayToggle) overlayToggle.setAttribute("aria-expanded", "false");
+        }
     });
 
 })();

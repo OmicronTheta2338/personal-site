@@ -70,10 +70,10 @@
 
     /* ── Init / restart ──────────────────────────────────────── */
     function initSnake(shared) {
-        const { COLS, CELL } = shared;
+        const { COL_LEFT_CELL, CELL } = shared;
 
-        // start near the middle-top, where there's usually space
-        const sc = Math.floor(COLS / 2);
+        // start to the left of the central column, near current scroll Y
+        const sc = Math.max(3, Math.floor(COL_LEFT_CELL / 2));
         const sr = Math.floor((window.scrollY + 200) / CELL);
 
         const body = [
@@ -102,9 +102,9 @@
 
         for (let i = 0; i < linkElements.length; i++) {
             const l = linkElements[i];
-            // Provide a generous bounding box to ensure it triggers
-            if (left < l.right + 4 && right > l.left - 4 &&
-                top < l.bottom + 4 && bottom > l.top - 4) {
+            // Use same bounding box as isWall to avoid adjacent false triggers
+            if (left + 2 < l.right && right - 2 > l.left &&
+                top + 2 < l.bottom && bottom - 2 > l.top) {
                 l.el.click();
             }
         }
@@ -145,6 +145,8 @@
             const head = snake.body[0];
             const newHead = { c: head.c + snake.dir.dc, r: head.r + snake.dir.dr };
 
+            checkLinkIntersection(newHead.c, newHead.r, shared);
+
             if (isWall(newHead.c, newHead.r, shared)) { snake.alive = false; return; }
             if (snake.body.some(b => b.c === newHead.c && b.r === newHead.r)) {
                 snake.alive = false; return;
@@ -157,8 +159,6 @@
             } else {
                 snake.body.pop();
             }
-
-            checkLinkIntersection(newHead.c, newHead.r, shared);
 
             // Screen scrolling
             const { CELL } = shared;
