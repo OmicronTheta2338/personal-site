@@ -26,6 +26,7 @@
     var cells;
     var hitIdx;     // flat index of the mine that killed the player
     var gameState;  // 'wait' | 'play' | 'won' | 'lost'
+    var dirty = true;
 
     /* ── Sprite images ───────────────────────────────────────────────────── */
     var imgFlag = new Image();
@@ -55,6 +56,7 @@
             cells.push({ mine: false, adj: 0, revealed: false, flagged: false });
         hitIdx = -1;
         gameState = "wait";
+        dirty = true;
     }
 
     function placeMines(safeC, safeR) {
@@ -173,9 +175,11 @@
 
     /* ── Render ──────────────────────────────────────────────────────────── */
     function render(shared) {
+        if (!cells || !dirty) return;
+        dirty = false;
+
         var ctx = shared.ctx;
         var canvas = shared.canvas;
-        if (!cells) return;
 
         // Fill the entire canvas first so the sub-cell remainder strip is covered
         ctx.fillStyle = C_FACE;
@@ -223,6 +227,7 @@
     /* ── Click handling ──────────────────────────────────────────────────── */
     function handleClick(mc, mr, button, shared) {
         if (!inBounds(mc, mr)) return;
+        dirty = true;
 
         // Restart on any click after game ends
         if (gameState === "won" || gameState === "lost") {

@@ -44,17 +44,32 @@
     }
 
     function onNavClick(e) {
-        var hash = e.currentTarget.getAttribute("href");
-        if (hash && hash.startsWith('#')) {
-            var sectionId = hash.substring(1);
+        var href = e.currentTarget.getAttribute("href");
+        if (href && href.startsWith('#')) {
+            e.preventDefault();
+            var sectionId = href.substring(1);
+
+            if (window.location.hash !== href) {
+                window.location.hash = href;
+            }
+            // Force synchronous SPA layout update so the new view is display:block
+            if (typeof window.handleRouting === 'function') {
+                window.handleRouting();
+            }
+
+            // Layout is now valid. Measure heading!
             var section = document.getElementById(sectionId);
             if (section) {
                 var heading = section.querySelector("h2");
                 if (heading) {
-                    e.preventDefault();
                     var rect = heading.getBoundingClientRect();
                     px = rect.left + 14 + window.scrollX;
                     py = rect.top + window.scrollY - SIZE - 10;
+                    vx = 0;
+                    vy = 0;
+                } else {
+                    px = window.innerWidth / 2;
+                    py = window.scrollY + 100;
                     vx = 0;
                     vy = 0;
                 }
@@ -206,7 +221,7 @@
 
             window.addEventListener('blur', clearInputs);
 
-            var navLinks = document.querySelectorAll('#site-nav a');
+            var navLinks = document.querySelectorAll('a[href^="#"]');
             for (var i = 0; i < navLinks.length; i++) {
                 navLinks[i].addEventListener('click', onNavClick);
             }
@@ -239,7 +254,7 @@
             }
             window.removeEventListener('blur', clearInputs);
 
-            var navLinks = document.querySelectorAll('#site-nav a');
+            var navLinks = document.querySelectorAll('a[href^="#"]');
             for (var i = 0; i < navLinks.length; i++) {
                 navLinks[i].removeEventListener('click', onNavClick);
             }

@@ -43,7 +43,9 @@
 
     /* ── Grid (fixed at load) ────────────────────────────────── */
     const COLS = Math.ceil(window.innerWidth / CELL);
-    const ROWS = Math.ceil((column.offsetHeight + 10 * CELL) / CELL);
+    // Bind height strictly to the home page wrapper so new shorter SPA pages don't shrink the background
+    const viewHome = document.getElementById("view-home") || column;
+    const ROWS = Math.ceil((viewHome.offsetHeight + 10 * CELL) / CELL);
     canvas.width = COLS * CELL;
     canvas.height = ROWS * CELL;
     if (overlayCanvas) {
