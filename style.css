@@ -85,8 +85,6 @@ body {
   user-select: text;
   -webkit-user-select: text;
   transition: opacity 0.2s;
-  display: flex;
-  flex-direction: column;
 }
 
 /* Escape key hides the column (Escape again restores it) */
@@ -169,11 +167,6 @@ body {
 }
 
 /* ── Section blocks ──────────────────────────────────────── */
-.page-view {
-  flex-grow: 1;
-  /* Pushes the footer and controls to the bottom */
-}
-
 .section {
   padding: 20px 24px 16px;
   border-bottom: var(--border);

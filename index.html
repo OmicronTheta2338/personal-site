@@ -188,6 +188,35 @@
         }
         window.addEventListener('hashchange', handleRouting);
         handleRouting(); // Initial routing
+
+        // Hide browser link previews (status bar URL) while preserving functionality
+        document.querySelectorAll('a[href]').forEach(function (a) {
+            var href = a.getAttribute('href');
+            var target = a.getAttribute('target');
+            var rel = a.getAttribute('rel');
+
+            // Remove href to prevent the browser's default status bar preview
+            a.removeAttribute('href');
+            a.setAttribute('data-href', href);
+
+            // Maintain link-like styling and accessibility
+            a.style.cursor = 'pointer';
+            a.setAttribute('tabindex', '0');
+
+            function navigate(e) {
+                e.preventDefault();
+                if (target === '_blank') {
+                    window.open(href, '_blank', rel && rel.indexOf('noopener') !== -1 ? 'noopener' : '');
+                } else {
+                    window.location.href = href;
+                }
+            }
+
+            a.addEventListener('click', navigate);
+            a.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') navigate(e);
+            });
+        });
     </script>
 
     <!-- Load modes first so window.__modes is populated before engine.js runs.

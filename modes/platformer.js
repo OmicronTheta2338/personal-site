@@ -204,7 +204,7 @@
                 el.style.position = "absolute";
                 el.style.width = SIZE + "px";
                 el.style.height = SIZE + "px";
-                el.style.backgroundColor = "#40d060";
+                el.style.backgroundColor = "#7EAEEC";
                 el.style.zIndex = "1000";
                 el.style.pointerEvents = "none";
 
@@ -226,11 +226,20 @@
                 navLinks[i].addEventListener('click', onNavClick);
             }
 
-            var aboutHeading = document.querySelector("#about h2");
-            if (aboutHeading) {
-                var rect = aboutHeading.getBoundingClientRect();
-                px = rect.left + 14 + window.scrollX;
-                py = rect.top + window.scrollY - SIZE - 10;
+            var hash = window.location.hash || '#about';
+            var sectionId = hash.substring(1);
+            var activeSection = document.getElementById(sectionId);
+            var heading = activeSection ? activeSection.querySelector("h2") : null;
+
+            if (heading) {
+                var rect = heading.getBoundingClientRect();
+                if (rect.width > 0) {
+                    px = rect.left + 14 + window.scrollX;
+                    py = rect.top + window.scrollY - SIZE - 10;
+                } else {
+                    px = shared.canvas.width / 2;
+                    py = Math.max(100, window.scrollY + 100);
+                }
             } else {
                 px = shared.canvas.width / 2;
                 py = Math.max(100, window.scrollY + 100);

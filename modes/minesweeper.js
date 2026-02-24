@@ -10,8 +10,7 @@
     "use strict";
 
     /* ── Constants ───────────────────────────────────────────────────────── */
-    const MS = 20;    // minesweeper cell size in px
-    const MINE_RATIO = 0.15;  // fraction of cells that are mines
+    const MS = 24;    // minesweeper cell size in px (matches 2x2 of CA CELL=12)
 
     /* ── Colours (tan / black palette) ──────────────────────────────────── */
     const C_FACE = "#c4a06a";  // unrevealed button face
@@ -50,25 +49,42 @@
         MSCOLS = Math.floor(canvas.width / MS);
         MSROWS = Math.floor(canvas.height / MS);
         TOTAL = MSCOLS * MSROWS;
-        MINES = Math.floor(TOTAL * MINE_RATIO);
         cells = [];
-        for (var i = 0; i < TOTAL; i++)
+        for (var i = 0; i < TOTAL; i++) {
             cells.push({ mine: false, adj: 0, revealed: false, flagged: false });
-        hitIdx = -1;
-        gameState = "wait";
-        dirty = true;
-    }
-
-    function placeMines(safeC, safeR) {
-        var safe = new Set();
-        safe.add(idx(safeC, safeR));
-        neighbours(safeC, safeR, function (c, r) { safe.add(idx(c, r)); });
-
-        var placed = 0;
-        while (placed < MINES) {
-            var i = Math.floor(Math.random() * TOTAL);
-            if (!cells[i].mine && !safe.has(i)) { cells[i].mine = true; placed++; }
         }
+
+        // Try to read CA grid active state
+        var caMode = window.__modes.find(function (m) { return typeof m.getCAState === 'function'; });
+        var caState = caMode ? caMode.getCAState() : null;
+
+        MINES = 0;
+
+        if (caState && caState.current) {
+            for (var r = 0; r < MSROWS; r++) {
+                for (var c = 0; c < MSCOLS; c++) {
+                    var msIdx = idx(c, r);
+                    var aliveCount = 0;
+                    // Check the 2x2 area in CA grid
+                    for (var dr = 0; dr < 2; dr++) {
+                        for (var dc = 0; dc < 2; dc++) {
+                            var caC = c * 2 + dc;
+                            var caR = r * 2 + dr;
+                            if (caC < caState.COLS && caR < caState.ROWS) {
+                                var caIdx = caR * caState.COLS + caC;
+                                if (caState.current[caIdx] > 0) aliveCount++;
+                            }
+                        }
+                    }
+                    if (aliveCount >= 2) { // 2, 3, or 4 cells alive -> bomb
+                        cells[msIdx].mine = true;
+                        MINES++;
+                    }
+                }
+            }
+        }
+
+        // Precompute adjacencies
         for (var r = 0; r < MSROWS; r++) {
             for (var c = 0; c < MSCOLS; c++) {
                 if (cells[idx(c, r)].mine) continue;
@@ -77,6 +93,10 @@
                 cells[idx(c, r)].adj = n;
             }
         }
+
+        hitIdx = -1;
+        gameState = "play";
+        dirty = true;
     }
 
     /* ── Flood fill reveal ───────────────────────────────────────────────── */
@@ -191,7 +211,7 @@
                 drawCell(ctx, c, r, showMines);
 
         // HUD — mines remaining
-        if (gameState === "wait" || gameState === "play") {
+        if (gameState === "play") {
             var flagged = 0;
             cells.forEach(function (c) { if (c.flagged) flagged++; });
             var txt = "MINES: " + (MINES - flagged);
@@ -272,12 +292,6 @@
 
         if (cell.revealed) return;
 
-        // First click: place mines now (guaranteed safe open area)
-        if (gameState === "wait") {
-            gameState = "play";
-            placeMines(mc, mr);
-        }
-
         if (cell.mine) {
             cell.revealed = true;
             hitIdx = idx(mc, mr);
@@ -303,7 +317,7 @@
         render: function (s) { render(s); },
 
         getSolids: function (_shared) {
-            if (!cells || gameState === "wait") return [];
+            if (!cells) return [];
             var solids = [];
             for (var r = 0; r < MSROWS; r++) {
                 for (var c = 0; c < MSCOLS; c++) {

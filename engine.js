@@ -253,7 +253,7 @@
 
     // Run the simulation for 50 iterations while loading
     if (currentMode && currentMode.step) {
-        for (let i = 0; i < 75; i++) {
+        for (let i = 0; i < 100; i++) {
             currentMode.step(shared);
         }
     }

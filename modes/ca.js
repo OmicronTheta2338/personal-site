@@ -136,6 +136,11 @@
                     }
                 }
                 return solids;
+            },
+
+            getCAState() {
+                if (!initialised) return null;
+                return { current, COLS, ROWS };
             }
         };
     }
