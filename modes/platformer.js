@@ -43,6 +43,25 @@
         jumpBuffer = 0;
     }
 
+    function onNavClick(e) {
+        var hash = e.currentTarget.getAttribute("href");
+        if (hash && hash.startsWith('#')) {
+            var sectionId = hash.substring(1);
+            var section = document.getElementById(sectionId);
+            if (section) {
+                var heading = section.querySelector("h2");
+                if (heading) {
+                    e.preventDefault();
+                    var rect = heading.getBoundingClientRect();
+                    px = rect.left + 14 + window.scrollX;
+                    py = rect.top + window.scrollY - SIZE - 10;
+                    vx = 0;
+                    vy = 0;
+                }
+            }
+        }
+    }
+
     function getColliders(shared) {
         var colliders = shared.columnHidden ? [] : shared.textColliders.slice();
 
@@ -187,8 +206,20 @@
 
             window.addEventListener('blur', clearInputs);
 
-            px = shared.canvas.width / 2;
-            py = Math.max(100, window.scrollY + 100);
+            var navLinks = document.querySelectorAll('#site-nav a');
+            for (var i = 0; i < navLinks.length; i++) {
+                navLinks[i].addEventListener('click', onNavClick);
+            }
+
+            var aboutHeading = document.querySelector("#about h2");
+            if (aboutHeading) {
+                var rect = aboutHeading.getBoundingClientRect();
+                px = rect.left + 14 + window.scrollX;
+                py = rect.top + window.scrollY - SIZE - 10;
+            } else {
+                px = shared.canvas.width / 2;
+                py = Math.max(100, window.scrollY + 100);
+            }
             vx = 0; vy = 0;
         },
 
@@ -207,6 +238,11 @@
                 activeLink = null;
             }
             window.removeEventListener('blur', clearInputs);
+
+            var navLinks = document.querySelectorAll('#site-nav a');
+            for (var i = 0; i < navLinks.length; i++) {
+                navLinks[i].removeEventListener('click', onNavClick);
+            }
         },
 
         step: function (shared) {
