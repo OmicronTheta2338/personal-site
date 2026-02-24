@@ -52,6 +52,24 @@
                 }
             }
         }
+
+        // Active mode solid collision (Game of Life pixels)
+        if (shared.currentMode && shared.currentMode.getSolids) {
+            const left = c * CELL;
+            const top = r * CELL;
+            const right = left + CELL;
+            const bottom = top + CELL;
+
+            const solids = shared.currentMode.getSolids(shared);
+            for (let i = 0; i < solids.length; i++) {
+                const s = solids[i];
+                // Use a slightly generous hitbox to allow sliding past single pixels, similar to text
+                if (left + 2 < s.right && right - 2 > s.left &&
+                    top + 2 < s.bottom && bottom - 2 > s.top) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -142,6 +160,9 @@
         activate(shared) {
             heldKey = null;
             if (shared.canvas) shared.canvas.style.visibility = "hidden";
+            if (shared.ctx && shared.canvas) {
+                shared.ctx.clearRect(0, 0, shared.canvas.width, shared.canvas.height);
+            }
             initSnake(shared);
         },
 
@@ -211,25 +232,33 @@
             overlayCtx.font = "bold 13px 'Courier New', monospace";
             overlayCtx.textBaseline = "top";
             overlayCtx.textAlign = "left";
-            // Make score follow camera
             overlayCtx.fillText("SCORE: " + snake.score, 12, window.scrollY + 12);
 
-            // Game-over overlay
+            // Game-over overlay (canvas background)
             if (!snake.alive) {
-                overlayCtx.fillStyle = "rgba(26,18,9,0.55)";
-                overlayCtx.fillRect(0, 0, canvas.width, canvas.height);
+                if (shared.canvas) shared.canvas.style.visibility = "visible";
+                const bgCtx = shared.ctx;
+
+                // Overwrite the underlying Game of Life render with solid blank
+                bgCtx.fillStyle = TAN_HEX;
+                bgCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+                bgCtx.fillStyle = "rgba(26,18,9,0.72)";
+                bgCtx.fillRect(0, 0, canvas.width, canvas.height);
+
                 const cx = canvas.width / 2;
-                const cy = window.scrollY + (window.innerHeight / 2);
-                overlayCtx.fillStyle = TAN_HEX;
-                overlayCtx.textAlign = "center";
-                overlayCtx.textBaseline = "middle";
-                overlayCtx.font = "bold 20px 'Courier New', monospace";
-                overlayCtx.fillText("GAME OVER", cx, cy - 26);
-                overlayCtx.font = "14px 'Courier New', monospace";
-                overlayCtx.fillText("SCORE: " + snake.score, cx, cy);
-                overlayCtx.font = "11px 'Courier New', monospace";
-                overlayCtx.fillText("[press W/A/S/D to restart]", cx, cy + 22);
-                overlayCtx.textAlign = "left";
+                const cy = canvas.height / 2;
+
+                bgCtx.fillStyle = TAN_HEX;
+                bgCtx.textAlign = "center";
+                bgCtx.textBaseline = "middle";
+                bgCtx.font = "bold 28px 'Courier New', monospace";
+                bgCtx.fillText("GAME OVER", cx, cy - 32);
+                bgCtx.font = "14px 'Courier New', monospace";
+                bgCtx.fillText("SCORE: " + snake.score, cx, cy);
+                bgCtx.font = "11px 'Courier New', monospace";
+                bgCtx.fillText("[press W/A/S/D to restart]", cx, cy + 28);
+                bgCtx.textAlign = "left";
             }
         },
 
@@ -239,6 +268,9 @@
             e.preventDefault();
 
             if (!snake || !snake.alive) {
+                if (shared.ctx && shared.canvas) {
+                    shared.ctx.clearRect(0, 0, shared.canvas.width, shared.canvas.height);
+                }
                 initSnake(shared);
                 heldKey = key;
                 holdStart = performance.now();
