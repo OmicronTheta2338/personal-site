@@ -289,15 +289,11 @@
                 navLinks[i].addEventListener('click', onNavClick);
             }
 
-            var hash = window.location.hash || '#about';
-            var sectionId = hash.substring(1);
-            var activeSection = document.getElementById(sectionId);
-            var heading = activeSection ? activeSection.querySelector("h2") : null;
-
-            if (heading) {
-                var rect = heading.getBoundingClientRect();
+            var aboutMeLink = document.querySelector('a[data-view="view-about-me"]');
+            if (aboutMeLink) {
+                var rect = aboutMeLink.getBoundingClientRect();
                 if (rect.width > 0) {
-                    px = rect.left + 14 + window.scrollX;
+                    px = rect.left + rect.width / 2 - SIZE / 2 + window.scrollX;
                     py = rect.top + window.scrollY - SIZE - 10;
                 } else {
                     px = shared.canvas.width / 2;

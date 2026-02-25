@@ -62,7 +62,11 @@ const tankMode = {
     },
 
     deactivate(shared) {
+        resetTank();
         shared.canvas.style.cursor = 'default';
+        if (shared.overlayCtx) {
+            shared.overlayCtx.clearRect(0, 0, shared.canvas.width, shared.canvas.height);
+        }
     },
 
     onKeyDown(e, shared) {
@@ -91,6 +95,9 @@ const tankMode = {
 
     getColliders(shared) {
         let colliders = shared.columnHidden ? [] : shared.textColliders.slice();
+        if (!shared.isAboutSiteActive) {
+            colliders = colliders.filter(function (c) { return !c.isSlider; });
+        }
 
         if (shared.currentMode && shared.currentMode.getSolids && shared.currentMode !== tankMode) {
             let columnRect = null;
@@ -173,9 +180,9 @@ const tankMode = {
             p.x += Math.sin(p.angle) * PROJ_SPEED;
             p.y -= Math.cos(p.angle) * PROJ_SPEED;
 
-            // Check if we hit the color slider!
+            // Check if we hit the color slider (only when about-site page is active)
             let hitSlider = false;
-            if (shared.sliderMarkerColliders && window.__pushColorSliderAbsolute) {
+            if (shared.isAboutSiteActive && shared.sliderMarkerColliders && window.__pushColorSliderAbsolute) {
                 for (let sm of shared.sliderMarkerColliders) {
                     if (p.x >= sm.left - PROJ_RADIUS && p.x <= sm.right + PROJ_RADIUS &&
                         p.y >= sm.top - (PROJ_SPEED * 2) && p.y <= sm.bottom + (PROJ_SPEED * 2)) {
@@ -185,7 +192,7 @@ const tankMode = {
                     }
                 }
             }
-            if (!hitSlider && shared.sliderBarColliders && window.__pushColorSliderAbsolute) {
+            if (!hitSlider && shared.isAboutSiteActive && shared.sliderBarColliders && window.__pushColorSliderAbsolute) {
                 for (let sb of shared.sliderBarColliders) {
                     if (p.x >= sb.left - PROJ_RADIUS && p.x <= sb.right + PROJ_RADIUS &&
                         p.y >= sb.top - (PROJ_SPEED * 2) && p.y <= sb.bottom + (PROJ_SPEED * 2)) {

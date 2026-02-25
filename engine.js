@@ -74,6 +74,10 @@
         COL_TOP_CELL, COL_BOTTOM_CELL,
         columnHidden: false,
         currentMode: null, // Track currently active main gamemode
+        get isAboutSiteActive() {
+            var v = document.getElementById("view-about-site");
+            return v ? getComputedStyle(v).display !== "none" : false;
+        },
     };
 
     /* ── Column visibility toggle (Escape) ───────────────────── */
@@ -197,13 +201,15 @@
 
         shared.sliderMarkerColliders = [];
         shared.sliderBarColliders = [];
+        var viewAboutSite = document.getElementById("view-about-site");
+        var isAboutSiteActive = viewAboutSite && getComputedStyle(viewAboutSite).display !== "none";
         var sliderBar = document.getElementById("color-slider-bar");
         var sliderMarker = document.getElementById("color-slider-marker");
 
         var barTop = 0;
         var barBottom = 0;
 
-        if (sliderBar) {
+        if (sliderBar && isAboutSiteActive) {
             var r = sliderBar.getBoundingClientRect();
             if (r.width > 0 && r.height > 0) {
                 var barLeft = r.left + window.scrollX;
@@ -240,7 +246,8 @@
                         left: visibleSegments[s].left,
                         right: visibleSegments[s].right,
                         top: barTop,
-                        bottom: barBottom
+                        bottom: barBottom,
+                        isSlider: true
                     });
                     shared.sliderBarColliders.push({
                         left: visibleSegments[s].left,
@@ -252,7 +259,7 @@
             }
         }
 
-        if (sliderMarker) {
+        if (sliderMarker && isAboutSiteActive) {
             var mr = sliderMarker.getBoundingClientRect();
             if (mr.width > 0 && mr.height > 0) {
                 var isMarkerObscured = false;
