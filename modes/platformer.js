@@ -134,11 +134,65 @@
             y + hh + pad >= c.top && y - hh - pad <= c.bottom;
     }
 
-    function resolveX(colliders) {
+    function resolveX(colliders, shared) {
         var hw = SIZE / 2;
         wallDir = 0;
         var hit = 0;
         if (vx === 0) return;
+
+        // Check slider marker collisions for pushing
+        if (!shared.columnHidden && shared.sliderMarkerColliders) {
+            for (var i = 0; i < shared.sliderMarkerColliders.length; i++) {
+                var sm = shared.sliderMarkerColliders[i];
+                if (intersect(px, py, sm)) {
+                    // Push the marker!
+                    if (window.__pushColorSliderAbsolute) {
+                        var isWall = false;
+                        if (vx > 0) {
+                            // Player right face is px + hw. 
+                            // We want marker's left face to be exactly at player right face.
+                            // Marker's center = marker's left face + width/2.
+                            isWall = window.__pushColorSliderAbsolute(px + hw, sm.el.offsetWidth / 2);
+                        } else if (vx < 0) {
+                            // Player left face is px - hw.
+                            // We want marker's right face to be exactly at player left face.
+                            // Marker's center = marker's right face - width/2.
+                            isWall = window.__pushColorSliderAbsolute(px - hw, -sm.el.offsetWidth / 2);
+                        }
+
+                        // Immediately update the cached bounds so other collision logic sees its new position 
+                        // Immediately update the cached bounds so other collision logic sees its new position
+                        var mr = sm.el.getBoundingClientRect();
+                        sm.left = mr.left + window.scrollX;
+                        sm.right = mr.right + window.scrollX;
+                        sm.top = mr.top + window.scrollY;
+                        sm.bottom = mr.bottom + window.scrollY;
+
+                        // Snap player exactly to the marker's new face so they don't overrun it
+                        if (vx > 0) {
+                            px = sm.left - hw - 0.01;
+                            // Add slight friction to the push
+                            vx *= 0.5;
+                        } else if (vx < 0) {
+                            px = sm.right + hw + 0.01;
+                            vx *= 0.5;
+                        }
+
+                        if (isWall) {
+                            // If it hit the end of the slider, it's a solid wall
+                            if (vx > 0) hit = 1;
+                            else if (vx < 0) hit = -1;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (hit !== 0) {
+            vx = 0;
+            wallDir = hit;
+            return;
+        }
 
         for (var i = 0; i < colliders.length; i++) {
             var c = colliders[i];
@@ -153,15 +207,24 @@
         }
     }
 
-    function resolveY(colliders) {
+    function resolveY(colliders, shared) {
         var hw = SIZE / 2;
         var hh = SIZE / 2;
         grounded = false;
         var hit = false;
 
         if (vy !== 0) {
+            var bounds = [];
             for (var i = 0; i < colliders.length; i++) {
-                var c = colliders[i];
+                bounds.push(colliders[i]);
+            }
+            if (shared && !shared.columnHidden && shared.sliderMarkerColliders) {
+                for (var i = 0; i < shared.sliderMarkerColliders.length; i++) {
+                    bounds.push(shared.sliderMarkerColliders[i]);
+                }
+            }
+            for (var i = 0; i < bounds.length; i++) {
+                var c = bounds[i];
                 if (intersect(px, py, c)) {
                     if (vy > 0) { py = c.top - hh; hit = 'bottom'; }
                     else if (vy < 0) { py = c.bottom + hh; hit = 'top'; }
@@ -204,7 +267,7 @@
                 el.style.position = "absolute";
                 el.style.width = SIZE + "px";
                 el.style.height = SIZE + "px";
-                el.style.backgroundColor = "#7EAEEC";
+                el.style.backgroundColor = "var(--comp-color)";
                 el.style.zIndex = "1000";
                 el.style.pointerEvents = "none";
 
@@ -345,10 +408,10 @@
             }
 
             px += vx;
-            resolveX(colliders);
+            resolveX(colliders, shared);
 
             py += vy;
-            resolveY(colliders);
+            resolveY(colliders, shared);
 
             // Screen scrolling only occurs if moving
             if (Math.abs(vx) > 0.5 || Math.abs(vy) > 0.5 || !grounded) {

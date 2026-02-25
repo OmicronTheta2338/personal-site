@@ -6,6 +6,10 @@
 
 :root {
   --tan: #d4b896;
+  --comp-color: #3b82f6;
+  /* Fallback complementary color */
+  --comp-dark-color: #1d4ed8;
+  /* Fallback darker complementary color */
   --black: #1a1209;
   --col-width: 660px;
   --border: 2px solid var(--black);
@@ -85,6 +89,16 @@ body {
   user-select: text;
   -webkit-user-select: text;
   transition: opacity 0.2s;
+
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 80px);
+  /* accounts for 32px top + 48px bottom padding on #page */
+}
+
+/* Let the active page view push other content to the bottom */
+.page-view {
+  flex-grow: 1;
 }
 
 /* Escape key hides the column (Escape again restores it) */
@@ -143,7 +157,8 @@ body {
   background: var(--tan);
 }
 
-#site-nav a {
+#site-nav a,
+#site-nav .nav-dropbtn {
   flex: 1;
   text-align: center;
   padding: 7px 4px;
@@ -152,8 +167,14 @@ body {
   font-size: 0.82rem;
   letter-spacing: 0.06em;
   border-right: 1px solid var(--black);
+  border-left: none;
+  border-top: none;
+  border-bottom: none;
+  background: var(--tan);
   text-transform: uppercase;
-  transition: background 0.08s;
+  transition: none;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 #site-nav a:last-child {
@@ -161,7 +182,55 @@ body {
 }
 
 #site-nav a:hover,
-#site-nav a.hover-active {
+#site-nav a.hover-active,
+#site-nav .nav-custom-select .nav-dropbtn:hover,
+#site-nav .nav-custom-select .nav-dropbtn.hover-active,
+#site-nav .nav-custom-select .nav-dropbtn[aria-expanded="true"] {
+  background: var(--black);
+  color: var(--tan);
+  transition: background 0.08s, color 0.08s;
+}
+
+/* -- Nav Custom Select logic -- */
+.nav-custom-select {
+  flex: 1;
+  border-right: 1px solid var(--black);
+}
+
+.nav-custom-select .nav-dropbtn {
+  width: 100%;
+  height: 100%;
+  border-right: none;
+}
+
+.nav-custom-select .select-options {
+  top: 100%;
+  bottom: auto;
+  /* Override default upward select-options behavior */
+  left: -1px;
+  /* Align with the 1px border shift */
+  width: calc(100% + 2px);
+  /* Stretch to cover borders */
+  border-top: 1px solid var(--black);
+  background: var(--tan);
+}
+
+.nav-custom-select .select-options li {
+  display: block;
+  text-align: left;
+  border-right: none;
+  border-bottom: 1px solid var(--black);
+  color: var(--black);
+  /* Override default var(--tan) */
+}
+
+.nav-custom-select .select-options li:last-child {
+  border-bottom: none;
+}
+
+.nav-custom-select .select-options li:hover,
+.nav-custom-select .select-options li.selected,
+.nav-custom-select .select-options li.hover-active {
   background: var(--black);
   color: var(--tan);
 }
@@ -213,6 +282,51 @@ body {
   color: var(--tan);
 }
 
+/* ── Color Slider ────────────────────────────────────────── */
+#color-slider-container {
+  margin: 16px 0;
+  position: relative;
+  height: 24px;
+  /* Make sure container doesn't block slider interaction */
+}
+
+#color-slider-bar {
+  position: absolute;
+  top: 8px;
+  /* vertically center 8px tall bar in 24px container */
+  left: 0;
+  right: 0;
+  height: 8px;
+  border: 1px solid var(--black);
+  /* The gradient wraps the spectrum starting from Hue 33 (which perfectly matches #d4b896).
+     This means the visual slider explicitly mirrors the JS math under the hood (0% to 100% = Hue 33 to 393). */
+  background: linear-gradient(to right,
+      hsl(33, 42%, 71%),
+      hsl(93, 42%, 71%),
+      hsl(153, 42%, 71%),
+      hsl(213, 42%, 71%),
+      hsl(273, 42%, 71%),
+      hsl(333, 42%, 71%),
+      hsl(393, 42%, 71%));
+  cursor: pointer;
+  z-index: 10;
+}
+
+#color-slider-marker {
+  position: absolute;
+  top: 0;
+  width: 12px;
+  height: 24px;
+  background: var(--black);
+  cursor: grab;
+  transform: translateX(-50%);
+  z-index: 11;
+}
+
+#color-slider-marker:active {
+  cursor: grabbing;
+}
+
 /* ── GoL & Overlay controls strip ──────────────────────────────────── */
 #gol-controls,
 #overlay-controls {
@@ -257,13 +371,14 @@ button {
   padding: 6px 14px;
   cursor: pointer;
   text-transform: uppercase;
-  transition: background 0.08s, color 0.08s;
+  transition: none;
 }
 
 button:hover,
 button.hover-active {
   background: var(--tan);
   color: var(--black);
+  transition: background 0.08s, color 0.08s;
 }
 
 /* ── Custom rule dropdown ────────────────────────────────── */

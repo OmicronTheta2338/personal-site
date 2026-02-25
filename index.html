@@ -32,16 +32,27 @@
 
             <!-- ── Navigation ─────────────────────────── -->
             <nav id="site-nav" aria-label="Main navigation">
-                <a href="#about">About</a>
-                <a href="#links">Links</a>
-                <a href="#projects">Projects</a>
-                <a href="#contact">Contact</a>
+                <a href="#about-me" class="nav-link" data-view="view-about-me">About-me</a>
+                <a href="#about-site" class="nav-link" data-view="view-about-site">About-website</a>
+                <a href="#projects" class="nav-link" data-view="view-projects">Projects</a>
+                <a href="#hire-me" class="nav-link" data-view="view-hire-me">hire-me</a>
+                <a href="#contact" class="nav-link" data-view="view-contact">Contact</a>
+                <div id="nav-more-dropdown" class="custom-select nav-custom-select">
+                    <button type="button" id="nav-more-toggle" class="select-toggle nav-dropbtn" aria-haspopup="listbox"
+                        aria-expanded="false">
+                        <span id="nav-more-label">More ▼</span>
+                    </button>
+                    <ul id="nav-more-options" class="select-options" role="listbox" hidden>
+                        <li role="option" data-view="view-puzzles" class="nav-link">Puzzles</li>
+                        <li role="option" data-view="view-tools" class="nav-link">Tools</li>
+                    </ul>
+                </div>
             </nav>
 
             <!-- ═══════════════════════════════════════════
            ABOUT ME
            ═══════════════════════════════════════════ -->
-            <div id="view-home" class="page-view">
+            <div id="view-about-me" class="page-view">
                 <section class="section" id="about">
                     <h2>About Me</h2>
                     <p>
@@ -64,9 +75,6 @@
                     </p>
                 </section>
 
-                <!-- ═══════════════════════════════════════════
-           LINKS
-           ═══════════════════════════════════════════ -->
                 <section class="section" id="links">
                     <h2>Links</h2>
                     <ul>
@@ -77,11 +85,10 @@
                         <li><a href="#puzzles">Puzzles</a> - try out some puzzle games!</li>
                     </ul>
                 </section>
+            </div><!-- /#view-about-me -->
 
-                <!-- ═══════════════════════════════════════════
-           PROJECTS
-           ═══════════════════════════════════════════ -->
-                <section class="section" id="projects">
+            <div id="view-projects" class="page-view" style="display: none;">
+                <section class="section" id="sec-projects">
                     <h2>Projects</h2>
                     <p>Things I've built or am building:</p>
                     <ul>
@@ -92,18 +99,42 @@
 
                     </ul>
                 </section>
+            </div><!-- /#view-projects -->
 
-                <!-- ═══════════════════════════════════════════
-           CONTACT
-           ═══════════════════════════════════════════ -->
-                <section class="section" id="contact">
+            <div id="view-hire-me" class="page-view" style="display: none;">
+                <section class="section" id="sec-hire-me">
+                    <h2>Hire Me</h2>
+                    <p>
+                        I am currently available for work! Reach out via the contact page for inquiries.
+                    </p>
+                </section>
+            </div><!-- /#view-hire-me -->
+
+            <div id="view-contact" class="page-view" style="display: none;">
+                <section class="section" id="sec-contact">
                     <h2>Contact</h2>
                     <p>
                         The best way to reach me is by email:
                         <a href="mailto:kameran.russell@gmail.com">kameran.russell@gmail.com</a>
                     </p>
                 </section>
-            </div><!-- /#view-home -->
+            </div><!-- /#view-contact -->
+
+            <!-- ═══════════════════════════════════════════
+           ABOUT THIS SITE
+           ═══════════════════════════════════════════ -->
+            <div id="view-about-site" class="page-view" style="display: none;">
+                <section class="section" id="sec-about-site">
+                    <h2>About This Site</h2>
+                    <p>
+                        Colour changer:
+                    </p>
+                    <div id="color-slider-container">
+                        <div id="color-slider-bar"></div>
+                        <div id="color-slider-marker" style="left: 0%;"></div>
+                    </div>
+                </section>
+            </div><!-- /#view-about-site -->
 
             <!-- ═══════════════════════════════════════════
            PUZZLES
@@ -116,6 +147,15 @@
                     </p>
                 </section>
             </div><!-- /#view-puzzles -->
+
+            <div id="view-tools" class="page-view" style="display: none;">
+                <section class="section" id="tools">
+                    <h2>Tools</h2>
+                    <p>
+                        Various handy tools I've made...
+                    </p>
+                </section>
+            </div><!-- /#view-tools -->
 
             <!-- ═══════════════════════════════════════════
            GOL CONTROLS
@@ -159,6 +199,7 @@
                         <li role="option" data-value="none" class="selected">No Overlay</li>
                         <li role="option" data-value="platformer">Platformer Controls</li>
                         <li role="option" data-value="snake">Snake Controls</li>
+                        <li role="option" data-value="tank">Tank Controls</li>
                     </ul>
                 </div>
             </div>
@@ -179,14 +220,83 @@
         // Stamp the current year in the footer without a build step
         document.getElementById("yr").textContent = new Date().getFullYear();
 
-        // Simple Hash Router
-        function handleRouting() {
-            var hash = window.location.hash;
-            var isPuzzles = hash === '#puzzles';
-            document.getElementById('view-home').style.display = isPuzzles ? 'none' : 'block';
-            document.getElementById('view-puzzles').style.display = isPuzzles ? 'block' : 'none';
+        // JavaScript-based router to prevent # anchor scrolling teleportation
+        function showPage(viewId) {
+            var views = document.querySelectorAll('.page-view');
+            var found = false;
+
+            views.forEach(function (view) {
+                if (view.id === viewId) {
+                    view.style.display = 'block';
+                    found = true;
+                } else {
+                    view.style.display = 'none';
+                }
+            });
+
+            // Default fallback
+            if (!found && document.getElementById('view-about-me')) {
+                document.getElementById('view-about-me').style.display = 'block';
+            }
+
+            // Explicitly scroll to top so shorter pages aren't loaded scrolled-down
+            window.scrollTo(0, 0);
+
+            // Notify engine to recalculate canvas.height
+            window.dispatchEvent(new CustomEvent("pageChanged"));
         }
-        window.addEventListener('hashchange', handleRouting);
+
+        function handleRouting() {
+            var hash = window.location.hash || '#about-me';
+            showPage('view-' + hash.substring(1));
+        }
+
+        window.addEventListener('hashchange', function (e) {
+            e.preventDefault(); // Stop native jump if possible (usually not possible here, must intercept click)
+            handleRouting();
+        });
+
+        // Intercept clicks on navigation links to trigger state change without scrolling
+        document.querySelectorAll('.nav-link').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                var viewId = this.getAttribute('data-view');
+                var hashId = '#' + viewId.substring(5);
+
+                showPage(viewId);
+                // Update URL aesthetically without triggering the scroll jump
+                history.pushState(null, null, hashId);
+
+                // If it was a dropdown option, close the dropdown
+                var dropdownList = document.getElementById('nav-more-options');
+                if (dropdownList && !dropdownList.hidden) {
+                    dropdownList.hidden = true;
+                    document.getElementById('nav-more-toggle').setAttribute('aria-expanded', 'false');
+                }
+            });
+        });
+
+        // Dropdown Toggle Logic
+        var navDropdownToggle = document.getElementById('nav-more-toggle');
+        var navDropdownOptions = document.getElementById('nav-more-options');
+
+        if (navDropdownToggle && navDropdownOptions) {
+            navDropdownToggle.addEventListener('click', function (e) {
+                e.preventDefault();
+                var isHidden = navDropdownOptions.hidden;
+                navDropdownOptions.hidden = !isHidden;
+                navDropdownToggle.setAttribute('aria-expanded', !isHidden);
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function (e) {
+                if (!navDropdownToggle.contains(e.target) && !navDropdownOptions.contains(e.target)) {
+                    navDropdownOptions.hidden = true;
+                    navDropdownToggle.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+
         handleRouting(); // Initial routing
 
         // Hide browser link previews (status bar URL) while preserving functionality
@@ -217,6 +327,139 @@
                 if (e.key === 'Enter') navigate(e);
             });
         });
+
+        // Color Slider Logic
+        (function () {
+            var sliderContainer = document.getElementById('color-slider-container');
+            var sliderMarker = document.getElementById('color-slider-marker');
+            var sliderBar = document.getElementById('color-slider-bar');
+            var root = document.documentElement;
+
+            var isDragging = false;
+
+            // HSL to RGB utility
+            function hue2rgb(p, q, t) {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1 / 6) return p + (q - p) * 6 * t;
+                if (t < 1 / 2) return q;
+                if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+                return p;
+            }
+
+            function hslToHex(h, s, l) {
+                var r, g, b;
+
+                // Allow percentage strings for saturation and lightness
+                s = typeof s === 'string' && s.includes('%') ? parseFloat(s) / 100 : s;
+                l = typeof l === 'string' && l.includes('%') ? parseFloat(l) / 100 : l;
+
+                if (s === 0) {
+                    r = g = b = l; // achromatic
+                } else {
+                    var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                    var p = 2 * l - q;
+                    r = hue2rgb(p, q, h / 360 + 1 / 3);
+                    g = hue2rgb(p, q, h / 360);
+                    b = hue2rgb(p, q, h / 360 - 1 / 3);
+                }
+                var toHex = function (x) {
+                    var hex = Math.round(x * 255).toString(16);
+                    return hex.length === 1 ? '0' + hex : hex;
+                };
+                return '#' + toHex(r) + toHex(g) + toHex(b);
+            }
+
+            // The default base colors
+            var saturation = 0.42;
+            var lightness = 0.71;
+            // The exact hue for #d4b896 is ~33. 
+            var baseHue = 33;
+
+            var currentPercentage = 0;
+
+            function updateColorFromPercentage(percentage) {
+                if (percentage < 0) percentage = 0;
+                if (percentage > 1) percentage = 1;
+                currentPercentage = percentage;
+
+                // Move marker
+                sliderMarker.style.left = (percentage * 100) + '%';
+
+                // Map percentage to hue (baseHue to baseHue+360), so 0% and 100% naturally wrap.
+                var hue = (baseHue + percentage * 360) % 360;
+
+                var baseHex = hslToHex(hue, saturation, lightness);
+                var compHue = (hue + 180) % 360;
+
+                // Slightly higher saturation for complementary looks better
+                var compHex = hslToHex(compHue, 0.60, 0.55);
+                var compDarkHex = hslToHex(compHue, 0.70, 0.40);
+
+                root.style.setProperty('--tan', baseHex);
+                root.style.setProperty('--comp-color', compHex);
+                root.style.setProperty('--comp-dark-color', compDarkHex);
+
+                // Publish to shared config if engine exposes it,
+                // Engine sets its own shared object properties. We can expose it via window
+                if (!window.__sharedColors) window.__sharedColors = {};
+                window.__sharedColors.TAN_HEX = baseHex;
+                window.__sharedColors.COMP_HEX = compHex;
+                window.__sharedColors.COMP_DARK_HEX = compDarkHex;
+                window.__sharedColors.HUE = hue;
+
+                // Fire custom event to notify engine of color update
+                window.dispatchEvent(new CustomEvent('colorChanged', {
+                    detail: { baseHex, compHex, compDarkHex, hue }
+                }));
+            }
+
+            function onPointerMove(e) {
+                if (!isDragging) return;
+                var rect = sliderContainer.getBoundingClientRect();
+                var pos = e.clientX - rect.left;
+                var percentage = pos / rect.width;
+                updateColorFromPercentage(percentage);
+            }
+
+            function onPointerUp() {
+                isDragging = false;
+                window.removeEventListener('mousemove', onPointerMove);
+                window.removeEventListener('mouseup', onPointerUp);
+                window.removeEventListener('touchmove', onPointerMove);
+                window.removeEventListener('touchend', onPointerUp);
+            }
+
+            function onPointerDown(e) {
+                isDragging = true;
+                onPointerMove(e.touches ? e.touches[0] : e);
+                window.addEventListener('mousemove', onPointerMove);
+                window.addEventListener('mouseup', onPointerUp);
+                window.addEventListener('touchmove', onPointerMove);
+                window.addEventListener('touchend', onPointerUp);
+            }
+
+            sliderContainer.addEventListener('mousedown', onPointerDown);
+            sliderContainer.addEventListener('touchstart', onPointerDown, { passive: false });
+
+            // Expose for games to push
+            window.__setColorSliderPercentage = function (p) {
+                updateColorFromPercentage(p);
+            };
+            window.__getColorSliderPercentage = function () {
+                return currentPercentage;
+            };
+            window.__pushColorSliderAbsolute = function (newPxX, widthOffset) {
+                var rect = sliderContainer.getBoundingClientRect();
+                var pos = newPxX - rect.left + widthOffset;
+                var percentage = pos / rect.width;
+                updateColorFromPercentage(percentage);
+                return currentPercentage === 0 || currentPercentage === 1; // returned true if hit ends
+            };
+
+            // Initialize defaults
+            updateColorFromPercentage(0); // init to "original"
+        })();
     </script>
 
     <!-- Load modes first so window.__modes is populated before engine.js runs.
@@ -225,6 +468,7 @@
     <script src="modes/snake.js"></script>
     <script src="modes/minesweeper.js"></script>
     <script src="modes/platformer.js"></script>
+    <script src="modes/tank.js"></script>
     <script src="engine.js"></script>
 </body>
 

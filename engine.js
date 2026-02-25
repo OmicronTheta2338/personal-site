@@ -23,7 +23,7 @@
 
     /* ── Palette & cell size (shared constants) ─────────────── */
     const CELL = 12;
-    const TAN_HEX = "#d4b896";
+    let TAN_HEX = window.__sharedColors ? window.__sharedColors.TAN_HEX : "#d4b896";
     const BLACK_HEX = "#1a1209";
 
     /* ── DOM ─────────────────────────────────────────────────── */
@@ -43,9 +43,9 @@
 
     /* ── Grid (fixed at load) ────────────────────────────────── */
     const COLS = Math.ceil(window.innerWidth / CELL);
-    const ROWS = Math.ceil((column.offsetHeight + 10 * CELL) / CELL);
+    const ROWS = Math.max(Math.ceil(window.innerHeight / CELL), 1);
     canvas.width = COLS * CELL;
-    canvas.height = ROWS * CELL;
+    canvas.height = Math.max(column.offsetHeight + 10 * CELL, window.innerHeight);
     if (overlayCanvas) {
         overlayCanvas.width = canvas.width;
         overlayCanvas.height = canvas.height;
@@ -64,8 +64,12 @@
     const shared = {
         canvas, ctx, overlayCanvas, overlayCtx,
         textColliders: [], linkElements: [],
+        sliderMarkerColliders: [],
         CELL, COLS, ROWS,
-        TAN_HEX, BLACK_HEX,
+        get TAN_HEX() { return TAN_HEX; },
+        get COMP_HEX() { return window.__sharedColors ? window.__sharedColors.COMP_HEX : "#40d060"; },
+        get COMP_DARK_HEX() { return window.__sharedColors ? window.__sharedColors.COMP_DARK_HEX : "#2a9d45"; },
+        BLACK_HEX,
         COL_LEFT_CELL, COL_RIGHT_CELL,
         COL_TOP_CELL, COL_BOTTOM_CELL,
         columnHidden: false,
@@ -81,20 +85,23 @@
     /* ── Shared colliders for overlay modes ──────────────────── */
     function buildCharacterColliders() {
         shared.textColliders = [];
-        var elems = document.querySelectorAll('#site-header h1, #site-header p, #site-nav a, .section h2, .section p, .section li, #contact p, #gol-controls, #overlay-controls, #site-footer, #randomise-btn');
+        var elems = document.querySelectorAll('#site-header h1, #site-header p, #site-nav a, #nav-more-label, #nav-more-options li, .section h2, .section p, .section li, #contact p, #gol-controls, #overlay-controls, #site-footer, #randomise-btn');
         var textNodes = [];
 
         var walk = document.createTreeWalker(document.getElementById("column"), NodeFilter.SHOW_TEXT, null, false);
         var ruleOpts = document.getElementById("rule-options");
         var overlayOpts = document.getElementById("overlay-options");
+        var navOpts = document.getElementById("nav-more-options");
         var isRuleOptsHidden = ruleOpts ? ruleOpts.hidden : true;
         var isOverlayOptsHidden = overlayOpts ? overlayOpts.hidden : true;
+        var isNavOptsHidden = navOpts ? navOpts.hidden : true;
         var node;
 
         while (node = walk.nextNode()) {
             var parent = node.parentElement;
             if (isRuleOptsHidden && ruleOpts && ruleOpts.contains(parent)) continue;
             if (isOverlayOptsHidden && overlayOpts && overlayOpts.contains(parent)) continue;
+            if (isNavOptsHidden && navOpts && navOpts.contains(parent)) continue;
             var isTarget = false;
             for (var i = 0; i < elems.length; i++) {
                 if (elems[i].contains(parent)) { isTarget = true; break; }
@@ -115,6 +122,15 @@
         }
         if (!isOverlayOptsHidden && overlayOpts) {
             var rect = overlayOpts.getBoundingClientRect();
+            blockingRects.push({
+                left: rect.left + window.scrollX,
+                right: rect.right + window.scrollX,
+                top: rect.top + window.scrollY,
+                bottom: rect.bottom + window.scrollY
+            });
+        }
+        if (!isNavOptsHidden && navOpts) {
+            var rect = navOpts.getBoundingClientRect();
             blockingRects.push({
                 left: rect.left + window.scrollX,
                 right: rect.right + window.scrollX,
@@ -161,7 +177,8 @@
                         // Let's check if the parent is inside the blocking dropdown itself.
                         var parent = tn.parentElement;
                         var isInsideDropdown = (!isRuleOptsHidden && ruleOpts && ruleOpts.contains(parent)) ||
-                            (!isOverlayOptsHidden && overlayOpts && overlayOpts.contains(parent));
+                            (!isOverlayOptsHidden && overlayOpts && overlayOpts.contains(parent)) ||
+                            (!isNavOptsHidden && navOpts && navOpts.contains(parent));
 
                         if (!isInsideDropdown) {
                             continue; // Skip this character
@@ -171,22 +188,107 @@
                         left: r.left + window.scrollX,
                         right: r.right + window.scrollX,
                         top: r.top + window.scrollY,
-                        bottom: r.bottom + window.scrollY
+                        bottom: r.bottom + window.scrollY,
+                        node: tn.parentElement
+                    });
+                }
+            }
+        }
+
+        shared.sliderMarkerColliders = [];
+        shared.sliderBarColliders = [];
+        var sliderBar = document.getElementById("color-slider-bar");
+        var sliderMarker = document.getElementById("color-slider-marker");
+
+        var barTop = 0;
+        var barBottom = 0;
+
+        if (sliderBar) {
+            var r = sliderBar.getBoundingClientRect();
+            if (r.width > 0 && r.height > 0) {
+                var barLeft = r.left + window.scrollX;
+                var barRight = r.right + window.scrollX;
+                barTop = r.top + window.scrollY;
+                barBottom = r.bottom + window.scrollY;
+
+                var visibleSegments = [{ left: barLeft, right: barRight }];
+
+                // Carve out sections covered by dropdowns
+                for (var j = 0; j < blockingRects.length; j++) {
+                    var b = blockingRects[j];
+                    if (barBottom > b.top && barTop < b.bottom) { // Vertical overlap
+                        var newSegments = [];
+                        for (var s = 0; s < visibleSegments.length; s++) {
+                            var seg = visibleSegments[s];
+                            if (seg.right > b.left && seg.left < b.right) { // Horizontal overlap
+                                if (seg.left < b.left) {
+                                    newSegments.push({ left: seg.left, right: b.left });
+                                }
+                                if (seg.right > b.right) {
+                                    newSegments.push({ left: b.right, right: seg.right });
+                                }
+                            } else {
+                                newSegments.push(seg); // No overlap, keep original
+                            }
+                        }
+                        visibleSegments = newSegments;
+                    }
+                }
+
+                for (var s = 0; s < visibleSegments.length; s++) {
+                    shared.textColliders.push({
+                        left: visibleSegments[s].left,
+                        right: visibleSegments[s].right,
+                        top: barTop,
+                        bottom: barBottom
+                    });
+                    shared.sliderBarColliders.push({
+                        left: visibleSegments[s].left,
+                        right: visibleSegments[s].right,
+                        top: barTop,
+                        bottom: barBottom
+                    });
+                }
+            }
+        }
+
+        if (sliderMarker) {
+            var mr = sliderMarker.getBoundingClientRect();
+            if (mr.width > 0 && mr.height > 0) {
+                var isMarkerObscured = false;
+                for (var j = 0; j < blockingRects.length; j++) {
+                    var b = blockingRects[j];
+                    if (mr.left + window.scrollX < b.right && mr.right + window.scrollX > b.left &&
+                        mr.top + window.scrollY < b.bottom && mr.bottom + window.scrollY > b.top) {
+                        isMarkerObscured = true;
+                        break;
+                    }
+                }
+
+                if (!isMarkerObscured) {
+                    shared.sliderMarkerColliders.push({
+                        left: mr.left + window.scrollX,
+                        right: mr.right + window.scrollX,
+                        top: mr.top + window.scrollY,
+                        bottom: mr.bottom + window.scrollY,
+                        el: sliderMarker
                     });
                 }
             }
         }
 
         shared.linkElements = [];
-        var links = document.querySelectorAll('#column a, #rule-toggle, #overlay-toggle, #rule-options li, #overlay-options li, #randomise-btn');
+        var links = document.querySelectorAll('#column a, #site-nav a, #rule-toggle, #overlay-toggle, #nav-more-toggle, #rule-options li, #overlay-options li, #nav-more-options li, #randomise-btn');
         for (var i = 0; i < links.length; i++) {
             var el = links[i];
             if (el.tagName.toLowerCase() === 'li' && el.parentElement.id === 'rule-options' && isRuleOptsHidden) continue;
             if (el.tagName.toLowerCase() === 'li' && el.parentElement.id === 'overlay-options' && isOverlayOptsHidden) continue;
+            if (el.tagName.toLowerCase() === 'li' && el.parentElement.id === 'nav-more-options' && isNavOptsHidden) continue;
             var r = el.getBoundingClientRect();
             if (r.width > 0 && r.height > 0) {
                 var isInsideDropdown = (!isRuleOptsHidden && ruleOpts && ruleOpts.contains(el)) ||
-                    (!isOverlayOptsHidden && overlayOpts && overlayOpts.contains(el));
+                    (!isOverlayOptsHidden && overlayOpts && overlayOpts.contains(el)) ||
+                    (!isNavOptsHidden && navOpts && navOpts.contains(el));
 
                 if (isObscured(r) && !isInsideDropdown) {
                     continue; // Skip this link if it's obscured by the dropdown
@@ -207,7 +309,18 @@
         setTimeout(buildCharacterColliders, 10);
     };
 
-    window.addEventListener('resize', buildCharacterColliders);
+    function resizeCanvas() {
+        const newHeight = Math.max(column.offsetHeight + 10 * CELL, window.innerHeight);
+        if (canvas.height !== newHeight) {
+            canvas.height = newHeight;
+            if (overlayCanvas) overlayCanvas.height = newHeight;
+            window.dispatchEvent(new CustomEvent('canvasResized'));
+        }
+        buildCharacterColliders();
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('pageChanged', resizeCanvas);
     window.addEventListener('hashchange', shared.updateColliders);
     document.addEventListener('click', buildCharacterColliders);
     const rt_toggle = document.getElementById('rule-toggle');
@@ -243,6 +356,8 @@
                 overlayHint.textContent = "A/D to move; W to jump; Enter to click";
             } else if (modeId === "snake") {
                 overlayHint.textContent = "W/A/S/D to steer; bump links to click";
+            } else if (modeId === "tank") {
+                overlayHint.textContent = "W/S move; A/D turn; Space to shoot";
             }
         }
     }
@@ -251,7 +366,7 @@
     MODES.forEach(m => { if (m.init) m.init(shared); });
     selectMode(MODES[0].id); // Defaults to Game of Life since Platformer was removed from the list
 
-    // Run the simulation for 50 iterations while loading
+    // Run the simulation for 100 iterations while loading
     if (currentMode && currentMode.step) {
         for (let i = 0; i < 100; i++) {
             currentMode.step(shared);
@@ -294,6 +409,11 @@
 
     /* ── Keyboard ─────────────────────────────────────────────── */
     document.addEventListener("keydown", e => {
+        // Prevent Spacebar from natively scrolling the page down
+        if (e.code === "Space" && e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
+            e.preventDefault();
+        }
+
         if (e.key === "Escape") { toggleColumn(); return; }
         if (overlayMode && overlayMode.onKeyDown) overlayMode.onKeyDown(e, shared);
         if (currentMode.onKeyDown && !e.defaultPrevented) currentMode.onKeyDown(e, shared);
@@ -309,7 +429,7 @@
     function canvasCell(e) {
         return {
             col: Math.floor((e.clientX + window.scrollX) / CELL),
-            row: Math.floor((e.clientY + window.scrollY) / CELL),
+            row: Math.floor((e.clientY + window.scrollY) / CELL) % ROWS,
         };
     }
     function tryPaint(e) {
@@ -336,6 +456,13 @@
     });
     document.addEventListener("mousemove", function (e) { if (painting) tryPaint(e); });
     document.addEventListener("mouseup", function () { painting = false; });
+
+    // Globally unfocus buttons/links on click so the Enter key doesn't get stolen 
+    // by the browser's accessibility outline during platformer gameplay!
+    document.addEventListener("click", function (e) {
+        let btn = e.target.closest("button, a");
+        if (btn) btn.blur();
+    });
 
     // Suppress context menu when the current mode handles right-click
     document.addEventListener("contextmenu", function (e) {
@@ -405,6 +532,12 @@
         }
         // Wait for the DOM to update before rebuilding colliders
         setTimeout(shared.updateColliders, 10);
+    });
+
+    // Color updater
+    window.addEventListener('colorChanged', function (e) {
+        TAN_HEX = e.detail.baseHex;
+        // Game loop will naturally re-render using shared.TAN_HEX
     });
 
 })();

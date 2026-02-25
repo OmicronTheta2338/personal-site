@@ -151,6 +151,46 @@
         }
     }
 
+    /* ── Slider Marker push ───────────────────────────────────── */
+    function checkSliderPush(c, r, dc, shared) {
+        if (shared.columnHidden || !shared.sliderMarkerColliders || dc === 0) return { isWall: false, pushed: false };
+
+        const { CELL, sliderMarkerColliders } = shared;
+        const left = c * CELL;
+        const top = r * CELL;
+        const right = left + CELL;
+        const bottom = top + CELL;
+
+        for (let i = 0; i < sliderMarkerColliders.length; i++) {
+            const sm = sliderMarkerColliders[i];
+
+            // Interaction bounds
+            if (left + 2 < sm.right && right - 2 > sm.left && top + 2 < sm.bottom && bottom - 2 > sm.top) {
+                // Push it
+                if (window.__pushColorSliderAbsolute) {
+                    var hitEnd = false;
+                    if (dc > 0) { // Moving right, push marker one cell to the right. Align marker's left edge to head's updated right edge.
+                        hitEnd = window.__pushColorSliderAbsolute(right, sm.el.offsetWidth / 2);
+                    } else if (dc < 0) { // Moving left, push marker one cell to the left
+                        hitEnd = window.__pushColorSliderAbsolute(left, -sm.el.offsetWidth / 2);
+                    }
+
+                    // Immediately update marker bounds
+                    var mr = sm.el.getBoundingClientRect();
+                    sm.left = mr.left + window.scrollX;
+                    sm.right = mr.right + window.scrollX;
+                    sm.top = mr.top + window.scrollY;
+                    sm.bottom = mr.bottom + window.scrollY;
+
+                    if (hitEnd) return { isWall: true, pushed: false };
+                    return { isWall: false, pushed: true };
+                }
+                return { isWall: true, pushed: false }; // Treat as fatal wall if it can't push
+            }
+        }
+        return { isWall: false, pushed: false };
+    }
+
     /* ── Mode object — registered into global mode list ─────── */
     const snakeMode = {
         id: "snake",
@@ -190,6 +230,12 @@
 
             checkLinkIntersection(newHead.c, newHead.r, shared);
 
+            // Check slider push first.
+            const pushResult = checkSliderPush(newHead.c, newHead.r, snake.dir.dc, shared);
+            if (pushResult.isWall) {
+                snake.alive = false; return;
+            }
+
             if (isWall(newHead.c, newHead.r, shared)) { snake.alive = false; return; }
             if (snake.body.some(b => b.c === newHead.c && b.r === newHead.r)) {
                 snake.alive = false; return;
@@ -226,7 +272,7 @@
             // Snake body
             snake.body.forEach((cell, i) => {
                 const isHead = (i === 0);
-                overlayCtx.fillStyle = snake.alive ? (isHead ? "#2a9d45" : "#40d060") : TAN_HEX;
+                overlayCtx.fillStyle = snake.alive ? (isHead ? shared.COMP_DARK_HEX : shared.COMP_HEX) : TAN_HEX;
                 overlayCtx.fillRect(cell.c * CELL, cell.r * CELL, CELL, CELL);
             });
 
