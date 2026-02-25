@@ -20,9 +20,27 @@ let explosions = []; // {x, y, r, maxR, life}
 let sharedRef = null;
 
 function resetTank() {
-    // spawn in the middle top area
-    x = window.innerWidth / 2;
-    y = window.scrollY + 200;
+    let spawnX = window.innerWidth / 2;
+    let spawnY = window.scrollY + 200;
+
+    let dropdown = document.getElementById('overlay-dropdown');
+    if (dropdown) {
+        let rect = dropdown.getBoundingClientRect();
+        // Spawn slightly to the left of the dropdown toggle button 
+        spawnX = rect.left - TANK_WIDTH - 20 + window.scrollX;
+        // Vertically aligned with the toggle button
+        spawnY = rect.top + rect.height / 2 + window.scrollY;
+    } else {
+        let col = document.getElementById('column');
+        if (col) {
+            let rect = col.getBoundingClientRect();
+            spawnX = rect.left + rect.width / 2 + window.scrollX;
+            spawnY = rect.bottom - 40 + window.scrollY;
+        }
+    }
+
+    x = spawnX;
+    y = spawnY;
     angle = 0;
     keys = { w: false, a: false, s: false, d: false };
     projectiles = [];
@@ -147,25 +165,6 @@ const tankMode = {
 
             // let it boundless vertically since page scrolls
             if (y < 0) y = 0;
-        }
-
-        let screenY = y - window.scrollY;
-
-        // Use percentages of screen height for margins so they don't overlap on very short windows
-        let baseMargin = Math.min(150, window.innerHeight * 0.3);
-        let viewOffset = Math.min(100, window.innerHeight * 0.2);
-
-        // -1 when facing up (angle=0), 1 when facing down (angle=PI)
-        let facingY = -Math.cos(angle);
-
-        // Increase threshold in the direction the tank is facing to push the camera further ahead
-        let topThreshold = baseMargin - facingY * viewOffset;
-        let bottomThreshold = baseMargin + facingY * viewOffset;
-
-        if (screenY < topThreshold) {
-            window.scrollBy(0, screenY - topThreshold);
-        } else if (screenY > window.innerHeight - bottomThreshold) {
-            window.scrollBy(0, screenY - (window.innerHeight - bottomThreshold));
         }
 
         // Projectiles

@@ -185,25 +185,41 @@
                 }
 
                 let hits = false;
-                for (let r_offset = 0; r_offset < repeats; r_offset++) {
-                    const yOffset = r_offset * blockHeight;
-                    for (let row = 0; row < ROWS; row++) {
-                        for (let col = 0; col < COLS; col++) {
-                            const cx = col * shared.CELL + shared.CELL / 2;
-                            const cy = yOffset + row * shared.CELL + shared.CELL / 2;
+                for (let row = 0; row < ROWS; row++) {
+                    for (let col = 0; col < COLS; col++) {
+                        const i = idx(col, row);
+                        if (permanentlyDead[i]) continue;
 
+                        let cx_base = col * shared.CELL + shared.CELL / 2;
+                        let cy_base = row * shared.CELL + shared.CELL / 2;
+
+                        // Find the shortest vector from the explosion to the nearest CA cell clone
+                        let eX_mod = ((exX % canvasWidth) + canvasWidth) % canvasWidth;
+                        let eY_mod = ((exY % blockHeight) + blockHeight) % blockHeight;
+
+                        let dx = cx_base - eX_mod;
+                        if (dx > canvasWidth / 2) dx -= canvasWidth;
+                        if (dx < -canvasWidth / 2) dx += canvasWidth;
+
+                        let dy = cy_base - eY_mod;
+                        if (dy > blockHeight / 2) dy -= blockHeight;
+                        if (dy < -blockHeight / 2) dy += blockHeight;
+
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist <= radius) {
+                            // The exact physical location where this hit occurred on the document
+                            let hitX = exX + dx;
+                            let hitY = exY + dy;
+
+                            let isProtected = false;
                             if (columnRect) {
-                                if (cx >= columnRect.left && cx <= columnRect.right &&
-                                    cy >= columnRect.top && cy <= columnRect.bottom) {
-                                    continue;
+                                if (hitX >= columnRect.left && hitX <= columnRect.right &&
+                                    hitY >= columnRect.top && hitY <= columnRect.bottom) {
+                                    isProtected = true;
                                 }
                             }
 
-                            const dx = cx - exX;
-                            const dy = cy - exY;
-                            const dist = Math.sqrt(dx * dx + dy * dy);
-                            if (dist <= radius) {
-                                const i = idx(col, row);
+                            if (!isProtected) {
                                 permanentlyDead[i] = 1;
                                 current[i] = 0;
                                 hits = true;
