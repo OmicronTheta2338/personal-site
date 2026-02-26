@@ -72,13 +72,17 @@
         BLACK_HEX,
         COL_LEFT_CELL, COL_RIGHT_CELL,
         COL_TOP_CELL, COL_BOTTOM_CELL,
+        columnRect: null,
         columnHidden: false,
         currentMode: null, // Track currently active main gamemode
+        frameCount: 0,
         get isAboutSiteActive() {
             var v = document.getElementById("view-about-site");
             return v ? getComputedStyle(v).display !== "none" : false;
         },
     };
+
+    window.__engineShared = shared;
 
     /* ── Column visibility toggle (Escape) ───────────────────── */
     function toggleColumn() {
@@ -89,29 +93,48 @@
     /* ── Shared colliders for overlay modes ──────────────────── */
     function buildCharacterColliders() {
         shared.textColliders = [];
-        var elems = document.querySelectorAll('#site-header h1, #site-header p, #site-nav a, #nav-more-label, #nav-more-options li, .section h2, .section p, .section li, #contact p, #gol-controls, #overlay-controls, #site-footer, #randomise-btn');
-        var textNodes = [];
 
-        var walk = document.createTreeWalker(document.getElementById("column"), NodeFilter.SHOW_TEXT, null, false);
+        var colEl = document.getElementById("column");
+        if (colEl) {
+            var hr = colEl.getBoundingClientRect();
+            shared.columnRect = {
+                left: hr.left + window.scrollX,
+                right: hr.right + window.scrollX,
+                top: hr.top + window.scrollY,
+                bottom: hr.bottom + window.scrollY
+            };
+        } else {
+            shared.columnRect = null;
+        }
+
+        var elems = document.querySelectorAll('#site-header h1, #site-header p, #site-nav a, #nav-more-label, #nav-more-options li, .section h2, .section p, .section li, #contact p, #gol-controls, #overlay-controls, #site-footer, #randomise-btn, #wg-generate-btn, #wg-sidebar h3, #wg-gamemode-list a, .wg-word-row, .wg-history-item, .wg-hint');
+
         var ruleOpts = document.getElementById("rule-options");
         var overlayOpts = document.getElementById("overlay-options");
         var navOpts = document.getElementById("nav-more-options");
         var isRuleOptsHidden = ruleOpts ? ruleOpts.hidden : true;
         var isOverlayOptsHidden = overlayOpts ? overlayOpts.hidden : true;
         var isNavOptsHidden = navOpts ? navOpts.hidden : true;
-        var node;
 
-        while (node = walk.nextNode()) {
-            var parent = node.parentElement;
-            if (isRuleOptsHidden && ruleOpts && ruleOpts.contains(parent)) continue;
-            if (isOverlayOptsHidden && overlayOpts && overlayOpts.contains(parent)) continue;
-            if (isNavOptsHidden && navOpts && navOpts.contains(parent)) continue;
-            var isTarget = false;
-            for (var i = 0; i < elems.length; i++) {
-                if (elems[i].contains(parent)) { isTarget = true; break; }
+        var textNodesSet = new Set();
+        for (var i = 0; i < elems.length; i++) {
+            var el = elems[i];
+            // Drastically improve performance by ignoring unseen text from inactive tabs
+            if (el.getBoundingClientRect().height === 0) continue;
+
+            var walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
+            var node;
+            while (node = walk.nextNode()) {
+                var parent = node.parentElement;
+                if (isRuleOptsHidden && ruleOpts && ruleOpts.contains(parent)) continue;
+                if (isOverlayOptsHidden && overlayOpts && overlayOpts.contains(parent)) continue;
+                if (isNavOptsHidden && navOpts && navOpts.contains(parent)) continue;
+                if (node.nodeValue.trim().length > 0) {
+                    textNodesSet.add(node);
+                }
             }
-            if (isTarget && node.nodeValue.trim().length > 0) textNodes.push(node);
         }
+        var textNodes = Array.from(textNodesSet);
 
         // Calculate blocking rectangles for open dropdowns
         var blockingRects = [];
@@ -172,12 +195,6 @@
                 if (r.width > 0 && r.height > 0) {
                     // Check if the character is obscured by an open dropdown
                     if (isObscured(r)) {
-                        // If it's part of an active dropdown menu option, we still want it to be collidable!
-                        // Wait, dropdown text nodes were already excluded from `textNodes` if they belong to the dropdown itself.
-                        // Actually, wait: `if (isRuleOptsHidden && ruleOpts.contains(parent)) continue;` handles hidden.
-                        // If it's NOT hidden, the dropdown text nodes DO get into `textNodes`.
-                        // If we blanket block them here, they will block themselves!
-
                         // Let's check if the parent is inside the blocking dropdown itself.
                         var parent = tn.parentElement;
                         var isInsideDropdown = (!isRuleOptsHidden && ruleOpts && ruleOpts.contains(parent)) ||
@@ -285,7 +302,7 @@
         }
 
         shared.linkElements = [];
-        var links = document.querySelectorAll('#column a, #site-nav a, #rule-toggle, #overlay-toggle, #nav-more-toggle, #rule-options li, #overlay-options li, #nav-more-options li, #randomise-btn');
+        var links = document.querySelectorAll('#column a, #site-nav a, #rule-toggle, #overlay-toggle, #nav-more-toggle, #rule-options li, #overlay-options li, #nav-more-options li, #randomise-btn, #wg-generate-btn');
         for (var i = 0; i < links.length; i++) {
             var el = links[i];
             if (el.tagName.toLowerCase() === 'li' && el.parentElement.id === 'rule-options' && isRuleOptsHidden) continue;
@@ -383,6 +400,7 @@
     /* ── Main loop ───────────────────────────────────────────── */
     let lastStep = 0;
     function loop(ts) {
+        shared.frameCount++;
         const ms = typeof currentMode.stepMs === "function"
             ? currentMode.stepMs()
             : currentMode.stepMs;

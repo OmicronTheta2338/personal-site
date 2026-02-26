@@ -230,8 +230,13 @@
                 return hits;
             },
 
+            cachedSolidsFrame: -1,
+            cachedSolids: [],
+
             getSolids(shared) {
                 if (!initialised) return [];
+                if (shared && shared.frameCount === this.cachedSolidsFrame) return this.cachedSolids;
+
                 const solids = [];
 
                 // Calculate tiling for physics boxes too!
@@ -255,6 +260,12 @@
                         }
                     }
                 }
+
+                if (shared) {
+                    this.cachedSolidsFrame = shared.frameCount;
+                    this.cachedSolids = solids;
+                }
+
                 return solids;
             },
 

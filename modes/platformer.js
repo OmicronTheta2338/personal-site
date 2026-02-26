@@ -82,19 +82,7 @@
 
         // Retrieve dynamic solid logic from the active main mode (like CA, Snake or Minesweeper)
         if (shared.currentMode && shared.currentMode.getSolids && shared.currentMode !== platformerMode) {
-            var columnRect = null;
-            if (!shared.columnHidden) {
-                var colEl = document.getElementById("column");
-                if (colEl) {
-                    var hr = colEl.getBoundingClientRect();
-                    columnRect = {
-                        left: hr.left + window.scrollX,
-                        right: hr.right + window.scrollX,
-                        top: hr.top + window.scrollY,
-                        bottom: hr.bottom + window.scrollY
-                    };
-                }
-            }
+            var columnRect = shared.columnRect;
 
             var solids = shared.currentMode.getSolids(shared);
             if (solids && solids.length > 0) {

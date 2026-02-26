@@ -45,6 +45,7 @@
                     </button>
                     <ul id="nav-more-options" class="select-options" role="listbox" hidden>
                         <li role="option" data-view="view-puzzles" class="nav-link">Puzzles</li>
+                        <li role="option" data-view="view-webgames" class="nav-link">Webgames</li>
                         <li role="option" data-view="view-tools" class="nav-link">Tools</li>
                     </ul>
                 </div>
@@ -148,6 +149,67 @@
                     </p>
                 </section>
             </div><!-- /#view-puzzles -->
+
+            <!-- ═══════════════════════════════════════════
+           WEBGAMES
+           ═══════════════════════════════════════════ -->
+            <div id="view-webgames" class="page-view" style="display: none;">
+                <section class="section" id="webgames">
+                    <h2>Webgames</h2>
+                    <p>
+                        Some fun browser games to play...
+                    </p>
+                    <ul>
+                        <li><a href="#word-game" class="nav-link" data-view="view-word-game">Word Association Game</a> -
+                            generates scenarios for improv</li>
+                    </ul>
+                </section>
+            </div><!-- /#view-webgames -->
+
+            <!-- ═══════════════════════════════════════════
+           WORD ASSOCIATION GAME (App)
+           ═══════════════════════════════════════════ -->
+            <div id="view-word-game" class="page-view" style="display: none;">
+                <section class="section">
+                    <h2>Word Association Game</h2>
+                    <div id="wg-container">
+                        <!-- Ported Game DOM will go here, styled to match the column -->
+                        <div id="wg-layout">
+                            <aside id="wg-sidebar">
+                                <h3>Gamemodes</h3>
+                                <ul id="wg-gamemode-list">
+                                    <li><a href="#word-game" role="option" data-mode="1" class="wg-active">1. Character
+                                            & Situation</a></li>
+                                    <li><a href="#word-game" role="option" data-mode="2">2. Adjective & Character</a>
+                                    </li>
+                                    <li><a href="#word-game" role="option" data-mode="3">3. Word -> Contexts</a></li>
+                                    <li><a href="#word-game" role="option" data-mode="4">4. Topic -> Synonyms</a></li>
+                                    <li><a href="#word-game" role="option" data-mode="5">5. Topic + Topic -> Words</a>
+                                    </li>
+                                    <li><a href="#word-game" role="option" data-mode="6">6. Word Stream Story</a></li>
+                                    <li><a href="#word-game" role="option" data-mode="7">7. Saying & Topic</a></li>
+                                </ul>
+                            </aside>
+
+                            <main id="wg-main">
+                                <div id="wg-instructions">
+                                    <h3>SELECT A GAMEMODE</h3>
+                                    <p>Choose a mode from the sidebar to begin.</p>
+                                </div>
+
+                                <div id="wg-display">
+                                    <!-- Content injected here -->
+                                </div>
+
+                            </main>
+                        </div>
+                        <div style="text-align: center; margin-top: 20px;">
+                            <button id="wg-generate-btn" type="button">⟳ Generate</button>
+                            <div class="wg-hint" style="margin-top: 10px;">(or press SPACEBAR)</div>
+                        </div>
+                    </div>
+                </section>
+            </div><!-- /#view-word-game -->
 
             <div id="view-tools" class="page-view" style="display: none;">
                 <section class="section" id="tools">
@@ -463,6 +525,14 @@
         })();
     </script>
 
+    <!-- Load Word Game Data -->
+    <script src="data/characters.js"></script>
+    <script src="data/situations.js"></script>
+    <script src="data/sayings.js"></script>
+    <script src="data/adjectives.js"></script>
+    <script src="data/topics.js"></script>
+    <script src="data/all-words.js"></script>
+
     <!-- Load modes first so window.__modes is populated before engine.js runs.
          To add a new game: create modes/mygame.js and add a <script> tag here. -->
     <script src="modes/ca.js"></script>
@@ -470,6 +540,7 @@
     <script src="modes/minesweeper.js"></script>
     <script src="modes/platformer.js"></script>
     <script src="modes/tank.js"></script>
+    <script src="word-game.js"></script>
     <script src="engine.js"></script>
 </body>
 
