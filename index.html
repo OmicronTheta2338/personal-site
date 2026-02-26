@@ -135,6 +135,21 @@
                         <div id="color-slider-bar"></div>
                         <div id="color-slider-marker" style="left: 0%;"></div>
                     </div>
+                    <p style="margin-top: 2em;">
+                        Resource usage:
+                    </p>
+                    <div style="display: flex; align-items: stretch;">
+                        <div id="perf-container" style="flex: 0 0 14px;">
+                            <div id="perf-bar"></div>
+                            <div id="perf-marker"></div>
+                        </div>
+                        <div id="perf-scale"
+                            style="position: relative; margin-left: 12px; font-size: 0.75rem; color: var(--black); display: flex; flex-direction: column; justify-content: space-between; height: 100px; margin-top: 8px;">
+                            <div style="line-height: 14px;">100%</div>
+                            <div style="line-height: 14px;">50%</div>
+                            <div style="line-height: 14px;">0%</div>
+                        </div>
+                    </div>
                 </section>
             </div><!-- /#view-about-site -->
 
@@ -205,7 +220,6 @@
                         </div>
                         <div style="text-align: center; margin-top: 20px;">
                             <button id="wg-generate-btn" type="button">⟳ Generate</button>
-                            <div class="wg-hint" style="margin-top: 10px;">(or press SPACEBAR)</div>
                         </div>
                     </div>
                 </section>
@@ -298,8 +312,30 @@
             });
 
             // Default fallback
+            var finalViewId = viewId;
             if (!found && document.getElementById('view-about-me')) {
                 document.getElementById('view-about-me').style.display = 'block';
+                finalViewId = 'view-about-me';
+            }
+
+            // Update top nav active states
+            document.querySelectorAll('#site-nav .nav-link, #nav-more-options .nav-link').forEach(function (el) {
+                if (el.getAttribute('data-view') === finalViewId) {
+                    el.classList.add('nav-active');
+                } else {
+                    el.classList.remove('nav-active');
+                }
+            });
+
+            // Also highlight the "More" button if its child is active
+            var moreBtn = document.getElementById('nav-more-toggle');
+            if (moreBtn) {
+                var isMoreActive = !!document.querySelector('#nav-more-options .nav-link.nav-active');
+                if (isMoreActive) {
+                    moreBtn.classList.add('nav-active');
+                } else {
+                    moreBtn.classList.remove('nav-active');
+                }
             }
 
             // Explicitly scroll to top so shorter pages aren't loaded scrolled-down

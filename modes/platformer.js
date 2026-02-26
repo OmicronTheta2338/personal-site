@@ -43,6 +43,46 @@
         jumpBuffer = 0;
     }
 
+    /* 
+    var coins = [];
+    var score = 0;
+
+    function spawnCoins(shared) {
+        coins = [];
+        var numCoins = 10;
+        var padding = 20;
+
+        var colliders = getColliders(shared);
+
+        for (var i = 0; i < numCoins; i++) {
+            var valid = false;
+            var attempts = 0;
+            var cx = 0, cy = 0;
+
+            while (!valid && attempts < 50) {
+                cx = padding + Math.random() * (window.innerWidth - padding * 2);
+                cy = padding + Math.random() * (document.body.scrollHeight - padding * 2);
+
+                valid = true;
+                for (var j = 0; j < colliders.length; j++) {
+                    var c = colliders[j];
+                    // rough intersecting box
+                    var hw = 15;
+                    if (cx + hw > c.left && cx - hw < c.right &&
+                        cy + hw > c.top && cy - hw < c.bottom) {
+                        valid = false;
+                        break;
+                    }
+                }
+                attempts++;
+            }
+            if (valid) {
+                coins.push({ x: cx, y: cy, timeOff: Math.random() * Math.PI * 2 });
+            }
+        }
+    }
+    */
+
     function onNavClick(e) {
         var href = e.currentTarget.getAttribute("href");
         if (href && href.startsWith('#')) {
@@ -404,6 +444,24 @@
                 if (screenY > window.innerHeight - 150) window.scrollBy(0, screenY - (window.innerHeight - 150));
             }
 
+            /*
+            // Coin Generation and Collection
+            if (coins.length === 0) {
+                spawnCoins(shared);
+            }
+
+            for (var cIdx = coins.length - 1; cIdx >= 0; cIdx--) {
+                var coin = coins[cIdx];
+                var hw = SIZE / 2;
+                var chw = 6; // Coin Radius
+                if (px + hw > coin.x - chw && px - hw < coin.x + chw &&
+                    py + Math.abs(vy) + hw > coin.y - chw && py - Math.abs(vy) - hw < coin.y + chw) {
+                    coins.splice(cIdx, 1);
+                    score++;
+                }
+            }
+            */
+
             // Respawn
             if (py > shared.canvas.height + 100) {
                 px = shared.canvas.width / 2;
@@ -428,6 +486,31 @@
                     eye2.style.left = (eyeX + 4) + "px";
                 }
             }
+
+            var ctx = shared.overlayCtx;
+            if (!ctx) return;
+
+            // 1) Clear every frame to avoid ghosting
+            ctx.clearRect(0, 0, shared.canvas.width, shared.canvas.height);
+
+            /*
+            // 2) HUD Score matching Snake style
+            ctx.fillStyle = shared.BLACK_HEX || "#1a1209";
+            ctx.font = "bold 13px 'Courier New', monospace";
+            ctx.textAlign = "left";
+            ctx.textBaseline = "top";
+
+            ctx.fillText("COINS: " + score, 12, 12 + window.scrollY); // lock to top-left viewport
+
+            // 3) Draw Coins as simple square pixel sprites
+            ctx.fillStyle = "#ffffff";
+            var cs = Math.floor(SIZE * 0.6); // Slightly smaller than player
+            var chw = cs / 2;
+            for (var i = 0; i < coins.length; i++) {
+                var c = coins[i];
+                ctx.fillRect(c.x - chw, c.y - chw, cs, cs);
+            }
+            */
         },
         /* // Debug: draw collision boxes
             ctx.fillStyle = "rgba(255, 0, 0, 0.5)";

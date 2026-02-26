@@ -107,7 +107,7 @@
             shared.columnRect = null;
         }
 
-        var elems = document.querySelectorAll('#site-header h1, #site-header p, #site-nav a, #nav-more-label, #nav-more-options li, .section h2, .section p, .section li, #contact p, #gol-controls, #overlay-controls, #site-footer, #randomise-btn, #wg-generate-btn, #wg-sidebar h3, #wg-gamemode-list a, .wg-word-row, .wg-history-item, .wg-hint');
+        var elems = document.querySelectorAll('#site-header h1, #site-header p, #site-nav a, #nav-more-label, #nav-more-options li, .section h2, .section p, .section li, #contact p, #gol-controls, #overlay-controls, #site-footer, #randomise-btn, #wg-generate-btn, #wg-sidebar h3, #wg-gamemode-list a, #wg-instructions h3, #wg-instructions p, .wg-word-row, .wg-history-item, .wg-hint');
 
         var ruleOpts = document.getElementById("rule-options");
         var overlayOpts = document.getElementById("overlay-options");
@@ -301,6 +301,31 @@
             }
         }
 
+        var perfMarker = document.getElementById("perf-marker");
+        if (perfMarker && isAboutSiteActive) {
+            var pr = perfMarker.getBoundingClientRect();
+            if (pr.width > 0 && pr.height > 0) {
+                var isPerfObscured = false;
+                for (var j = 0; j < blockingRects.length; j++) {
+                    var b = blockingRects[j];
+                    if (pr.left + window.scrollX < b.right && pr.right + window.scrollX > b.left &&
+                        pr.top + window.scrollY < b.bottom && pr.bottom + window.scrollY > b.top) {
+                        isPerfObscured = true;
+                        break;
+                    }
+                }
+                if (!isPerfObscured) {
+                    shared.textColliders.push({
+                        left: pr.left + window.scrollX,
+                        right: pr.right + window.scrollX,
+                        top: pr.top + window.scrollY,
+                        bottom: pr.bottom + window.scrollY,
+                        isPerfMarker: true
+                    });
+                }
+            }
+        }
+
         shared.linkElements = [];
         var links = document.querySelectorAll('#column a, #site-nav a, #rule-toggle, #overlay-toggle, #nav-more-toggle, #rule-options li, #overlay-options li, #nav-more-options li, #randomise-btn, #wg-generate-btn');
         for (var i = 0; i < links.length; i++) {
@@ -399,8 +424,47 @@
 
     /* ── Main loop ───────────────────────────────────────────── */
     let lastStep = 0;
+
+    let lastFrameTime = performance.now();
+    let smoothedFrameTime = 16.6;
+
     function loop(ts) {
         shared.frameCount++;
+
+        // --- Performance Indicator Logic ---
+        var perfMarker = document.getElementById("perf-marker");
+        var viewAboutSite = document.getElementById("view-about-site");
+        if (perfMarker && viewAboutSite && getComputedStyle(viewAboutSite).display !== "none") {
+            // Exclusively use frame time delta as it is a more reactive metric of engine load
+            var delta = ts - lastFrameTime;
+            lastFrameTime = ts;
+
+            // heavily smooth the delta so it's readable
+            smoothedFrameTime = smoothedFrameTime * 0.95 + delta * 0.05;
+
+            // Map 16.6ms (60fps) to 0.0, and 60ms+ (heavy lag) to 1.0
+            var resourceUsage = Math.max(0, Math.min(1, (smoothedFrameTime - 16.6) / 43.4));
+
+            // Map 0.0-1.0 usage to max 86px top (100px container - 14px marker)
+            // top=0 is 100% usage (top of the bar), top=86 is 0% usage (bottom of the bar)
+            var newTop = (1 - resourceUsage) * 86;
+            perfMarker.style.top = newTop + "px";
+
+            // Dynamically update the hitbox for physics engines
+            if (shared.textColliders) {
+                for (var i = 0; i < shared.textColliders.length; i++) {
+                    var tc = shared.textColliders[i];
+                    if (tc.isPerfMarker) {
+                        var rect = perfMarker.getBoundingClientRect();
+                        tc.top = rect.top + window.scrollY;
+                        tc.bottom = rect.bottom + window.scrollY;
+                        break;
+                    }
+                }
+            }
+        }
+        // -----------------------------------
+
         const ms = typeof currentMode.stepMs === "function"
             ? currentMode.stepMs()
             : currentMode.stepMs;

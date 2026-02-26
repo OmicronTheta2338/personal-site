@@ -394,6 +394,11 @@ function executeExplosion(exX, exY, radius, shared) {
                     newVal += '\u00A0';
                     changed = true;
                     hits = true;
+
+                    // Expose destruction indices to word-game logic
+                    if (window.__wgDestroyChar) {
+                        window.__wgDestroyChar(tn.parentElement, i);
+                    }
                 }
             } else {
                 newVal += char;

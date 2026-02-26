@@ -183,8 +183,10 @@ body {
 
 #site-nav a:hover,
 #site-nav a.hover-active,
+#site-nav a.nav-active,
 #site-nav .nav-custom-select .nav-dropbtn:hover,
 #site-nav .nav-custom-select .nav-dropbtn.hover-active,
+#site-nav .nav-custom-select .nav-dropbtn.nav-active,
 #site-nav .nav-custom-select .nav-dropbtn[aria-expanded="true"] {
   background: var(--black);
   color: var(--tan);
@@ -286,8 +288,10 @@ body {
   transition: background 0.1s, color 0.1s;
 }
 
-#wg-gamemode-list li a:hover {
-  background: rgba(0, 0, 0, 0.05);
+#wg-gamemode-list li a:hover,
+#wg-gamemode-list li a.hover-active {
+  background: var(--black);
+  color: var(--tan);
 }
 
 #wg-gamemode-list li a.wg-active {
@@ -350,6 +354,34 @@ body {
 
 #color-slider-marker:active {
   cursor: grabbing;
+}
+
+/* ── Performance Indicator ────────────────────────────────── */
+#perf-container {
+  position: relative;
+  width: 14px;
+  height: 100px;
+  margin-top: 8px;
+  margin-left: 2px;
+}
+
+#perf-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 6px;
+  width: 2px;
+  background: var(--black);
+  opacity: 0.2;
+}
+
+#perf-marker {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: var(--black);
+  top: 0px;
+  left: 0;
 }
 
 /* ── GoL & Overlay controls strip ──────────────────────────────────── */
