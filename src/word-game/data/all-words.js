@@ -1,4 +1,4 @@
-window.ALL_WORDS = [
+export const ALL_WORDS = [
     "abandon",
     "ability",
     "able",

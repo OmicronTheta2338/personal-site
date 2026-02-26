@@ -1,4 +1,4 @@
-window.SITUATIONS = [
+export const SITUATIONS = [
     "on a last date",
     "on a first date",
     "admitted to a mental asylum",

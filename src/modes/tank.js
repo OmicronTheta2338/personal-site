@@ -1,4 +1,13 @@
-// top-down tank overlay
+/**
+ * modes/tank.js — Top-down tank overlay
+ *
+ * W/S move; A/D turn; Space to shoot. Projectiles explode on impact,
+ * destroying CA cells and text characters.
+ */
+
+import { getColliders } from '../utils/collision-helpers.js';
+import { pushColorSliderAbsolute } from '../color-slider.js';
+import { destroyChar } from '../word-game/word-game.js';
 
 const TANK_WIDTH = 16;
 const TANK_HEIGHT = 20;
@@ -11,13 +20,11 @@ const EXPLOSION_RADIUS = 40;
 
 let x = 0;
 let y = 0;
-let angle = 0; // facing straight up is 0
+let angle = 0;
 
 let keys = { w: false, a: false, s: false, d: false };
 let projectiles = [];
-let explosions = []; // {x, y, r, maxR, life}
-
-let sharedRef = null;
+let explosions = [];
 
 function resetTank() {
     let spawnX = window.innerWidth / 2;
@@ -26,9 +33,7 @@ function resetTank() {
     let dropdown = document.getElementById('overlay-dropdown');
     if (dropdown) {
         let rect = dropdown.getBoundingClientRect();
-        // Spawn slightly to the left of the dropdown toggle button 
         spawnX = rect.left - TANK_WIDTH - 20 + window.scrollX;
-        // Vertically aligned with the toggle button
         spawnY = rect.top + rect.height / 2 + window.scrollY;
     } else {
         let col = document.getElementById('column');
@@ -47,299 +52,11 @@ function resetTank() {
     explosions = [];
 }
 
-const tankMode = {
-    id: "tank",
-    label: "Tank Controls",
-    stepMs: 16,
-
-    init(shared) {
-        sharedRef = shared;
-    },
-
-    activate(shared) {
-        resetTank();
-        shared.canvas.style.cursor = 'crosshair';
-    },
-
-    deactivate(shared) {
-        resetTank();
-        shared.canvas.style.cursor = 'default';
-        if (shared.overlayCtx) {
-            shared.overlayCtx.clearRect(0, 0, shared.canvas.width, shared.canvas.height);
-        }
-    },
-
-    onKeyDown(e, shared) {
-        let k = e.key.toLowerCase();
-        if (keys.hasOwnProperty(k)) {
-            keys[k] = true;
-            e.preventDefault();
-        }
-        if (e.code === "Space") {
-            // fire projectile
-            projectiles.push({
-                x: x,
-                y: y,
-                angle: angle
-            });
-            e.preventDefault();
-        }
-    },
-
-    onKeyUp(e, shared) {
-        let k = e.key.toLowerCase();
-        if (keys.hasOwnProperty(k)) {
-            keys[k] = false;
-        }
-    },
-
-    getColliders(shared) {
-        let colliders = shared.columnHidden ? [] : shared.textColliders.slice();
-        if (!shared.isAboutSiteActive) {
-            colliders = colliders.filter(function (c) { return !c.isSlider; });
-        }
-
-        if (shared.currentMode && shared.currentMode.getSolids && shared.currentMode !== tankMode) {
-            let columnRect = null;
-            if (!shared.columnHidden) {
-                let colEl = document.getElementById("column");
-                if (colEl) {
-                    let hr = colEl.getBoundingClientRect();
-                    columnRect = {
-                        left: hr.left + window.scrollX,
-                        right: hr.right + window.scrollX,
-                        top: hr.top + window.scrollY,
-                        bottom: hr.bottom + window.scrollY
-                    };
-                }
-            }
-
-            let solids = shared.currentMode.getSolids(shared);
-            if (solids && solids.length > 0) {
-                for (let j = 0; j < solids.length; j++) {
-                    let s = solids[j];
-                    // If the column is visible, ignore cells completely covered by it
-                    if (!shared.columnHidden && columnRect) {
-                        if (s.right > columnRect.left && s.left < columnRect.right &&
-                            s.bottom > columnRect.top && s.top < columnRect.bottom) {
-                            continue;
-                        }
-                    }
-                    colliders.push(s);
-                }
-            }
-        }
-        return colliders;
-    },
-
-    step(shared) {
-        // Turning
-        if (keys.a) angle -= TANK_TURN_SPEED;
-        if (keys.d) angle += TANK_TURN_SPEED;
-
-        // Movement
-        if (keys.w || keys.s) {
-            let speed = keys.w ? TANK_SPEED : -TANK_SPEED * 0.6; // slower reverse
-
-            let dx = Math.sin(angle) * speed;
-            let dy = -Math.cos(angle) * speed; // -cos because 0 angle is straight UP (-y)
-
-            // Simplistic collision logic for the tank body against text/solids
-            // Tank needs to not drive through the text!
-            // First pass, let's just use point collision for simplicity, can refine if needed.
-            let nextX = x + dx;
-            let nextY = y + dy;
-
-            let hit = false;
-            let allSolids = this.getColliders(shared);
-
-            for (let i = 0; i < allSolids.length; i++) {
-                let s = allSolids[i];
-                if (nextX >= s.left && nextX <= s.right && nextY >= s.top && nextY <= s.bottom) {
-                    hit = true;
-                    break;
-                }
-            }
-
-            if (!hit) {
-                x = nextX;
-                y = nextY;
-            }
-
-            // keep in window horizontally
-            if (x < 0) x = 0;
-            if (x > window.innerWidth) x = window.innerWidth;
-
-            // let it boundless vertically since page scrolls
-            if (y < 0) y = 0;
-        }
-
-        // Projectiles
-        for (let i = projectiles.length - 1; i >= 0; i--) {
-            let p = projectiles[i];
-            p.x += Math.sin(p.angle) * PROJ_SPEED;
-            p.y -= Math.cos(p.angle) * PROJ_SPEED;
-
-            // Check if we hit the color slider (only when about-site page is active)
-            let hitSlider = false;
-            if (shared.isAboutSiteActive && shared.sliderMarkerColliders && window.__pushColorSliderAbsolute) {
-                for (let sm of shared.sliderMarkerColliders) {
-                    if (p.x >= sm.left - PROJ_RADIUS && p.x <= sm.right + PROJ_RADIUS &&
-                        p.y >= sm.top - (PROJ_SPEED * 2) && p.y <= sm.bottom + (PROJ_SPEED * 2)) {
-                        window.__pushColorSliderAbsolute(p.x, 0);
-                        hitSlider = true;
-                        break;
-                    }
-                }
-            }
-            if (!hitSlider && shared.isAboutSiteActive && shared.sliderBarColliders && window.__pushColorSliderAbsolute) {
-                for (let sb of shared.sliderBarColliders) {
-                    if (p.x >= sb.left - PROJ_RADIUS && p.x <= sb.right + PROJ_RADIUS &&
-                        p.y >= sb.top - (PROJ_SPEED * 2) && p.y <= sb.bottom + (PROJ_SPEED * 2)) {
-                        window.__pushColorSliderAbsolute(p.x, 0);
-                        hitSlider = true;
-                        break;
-                    }
-                }
-            }
-            if (hitSlider) {
-                // Generate an explosion that updates the colour and destroys text
-                explosions.push({
-                    x: p.x,
-                    y: p.y,
-                    r: 0,
-                    maxR: EXPLOSION_RADIUS,
-                    life: 1.0
-                });
-                executeExplosion(p.x, p.y, EXPLOSION_RADIUS, shared);
-                projectiles.splice(i, 1);
-                continue;
-            }
-
-            // Check collision
-            let hit = false;
-            let allSolids = this.getColliders(shared);
-
-            for (let s of allSolids) {
-                if (p.x >= s.left && p.x <= s.right && p.y >= s.top && p.y <= s.bottom) {
-                    hit = true;
-                    // Check if we hit an interactive link
-                    if (s.node) {
-                        let interactiveNode = s.node.closest('a, button, [role="option"], .select-toggle, #nav-more-label, #randomise-btn');
-                        if (interactiveNode) {
-                            p.hitLink = interactiveNode;
-                        }
-                    }
-                    break;
-                }
-            }
-
-            // OOB wrap
-            if (p.x < 0) p.x += window.innerWidth;
-            if (p.x > window.innerWidth) p.x -= window.innerWidth;
-            if (p.y < window.scrollY) p.y += window.innerHeight;
-            if (p.y > window.scrollY + window.innerHeight) p.y -= window.innerHeight;
-
-            if (hit) {
-                if (p.hitLink) {
-                    // simulate mouse click on the actual link!
-                    p.hitLink.click();
-                    // don't explode visually, just despawn
-                    projectiles.splice(i, 1);
-                } else {
-                    // Explode!
-                    explosions.push({
-                        x: p.x,
-                        y: p.y,
-                        r: 0,
-                        maxR: EXPLOSION_RADIUS,
-                        life: 1.0
-                    });
-                    executeExplosion(p.x, p.y, EXPLOSION_RADIUS, shared);
-                    projectiles.splice(i, 1);
-                }
-            }
-        }
-
-        // Explosions animation step
-        for (let i = explosions.length - 1; i >= 0; i--) {
-            let ex = explosions[i];
-            ex.r += (ex.maxR - ex.r) * 0.2; // ease out
-            ex.life -= 0.05;
-            if (ex.life <= 0) {
-                explosions.splice(i, 1);
-            }
-        }
-    },
-
-    render(shared) {
-        const { overlayCtx } = shared;
-        if (!overlayCtx) return;
-
-        // Clear the overlay frame
-        overlayCtx.clearRect(0, 0, shared.canvas.width, shared.canvas.height);
-
-        // Draw projectiles
-        overlayCtx.fillStyle = shared.COMP_HEX || "#40d060";
-        for (let p of projectiles) {
-            overlayCtx.beginPath();
-            overlayCtx.arc(p.x, p.y, PROJ_RADIUS, 0, Math.PI * 2);
-            overlayCtx.fill();
-
-            // outline
-            overlayCtx.lineWidth = 1;
-            overlayCtx.strokeStyle = "#1a1209";
-            overlayCtx.stroke();
-        }
-
-        // Draw explosions
-        for (let ex of explosions) {
-            overlayCtx.globalAlpha = Math.max(0, ex.life);
-            overlayCtx.beginPath();
-            overlayCtx.arc(ex.x, ex.y, ex.r, 0, Math.PI * 2);
-            overlayCtx.fillStyle = shared.COMP_HEX || "#40d060";
-            overlayCtx.fill();
-            overlayCtx.strokeStyle = shared.COMP_DARK_HEX || "#2a9d45";
-            overlayCtx.lineWidth = 2;
-            overlayCtx.stroke();
-        }
-        overlayCtx.globalAlpha = 1.0;
-
-        // Draw tank
-        overlayCtx.save();
-        overlayCtx.translate(x, y);
-        overlayCtx.rotate(angle);
-
-        // Body
-        overlayCtx.fillStyle = shared.COMP_HEX || "#40d060";
-        overlayCtx.fillRect(-TANK_WIDTH / 2, -TANK_HEIGHT / 2, TANK_WIDTH, TANK_HEIGHT);
-
-        // Body outline
-        overlayCtx.strokeStyle = "#1a1209";
-        overlayCtx.lineWidth = 2;
-        overlayCtx.strokeRect(-TANK_WIDTH / 2, -TANK_HEIGHT / 2, TANK_WIDTH, TANK_HEIGHT);
-
-        // Turret barrel
-        overlayCtx.fillStyle = "#1a1209";
-        overlayCtx.fillRect(-2, -TANK_HEIGHT / 2 - 6, 4, TANK_HEIGHT / 2 + 6);
-
-        // Center hatch
-        overlayCtx.beginPath();
-        overlayCtx.arc(0, 0, 4, 0, Math.PI * 2);
-        overlayCtx.fillStyle = "#1a1209";
-        overlayCtx.fill();
-
-        overlayCtx.restore();
-    }
-};
-
 function executeExplosion(exX, exY, radius, shared) {
-    // 1. Destroy CA cells
     if (shared.currentMode && shared.currentMode.destroy) {
         shared.currentMode.destroy(exX, exY, radius, shared);
     }
 
-    // 2. Destroy Text using TreeWalker
     if (shared && shared.columnHidden) return;
 
     const column = document.getElementById('column');
@@ -351,7 +68,6 @@ function executeExplosion(exX, exY, radius, shared) {
     let nodesToProcess = [];
 
     while (node = walk.nextNode()) {
-        // Skip hidden dropdown texts, etc. to be safe
         const parent = node.parentElement;
         if (!parent) continue;
         if (parent.closest('#rule-options[hidden]')) continue;
@@ -373,7 +89,7 @@ function executeExplosion(exX, exY, radius, shared) {
         for (let i = 0; i < val.length; i++) {
             let char = val[i];
             if (char.trim() === '') {
-                newVal += char; // keep existing whitespace as-is
+                newVal += char;
                 continue;
             }
 
@@ -388,17 +104,13 @@ function executeExplosion(exX, exY, radius, shared) {
             if (dist <= radius) {
                 let interactiveNode = tn.parentElement.closest('a, button, [role="option"], .select-toggle, #nav-more-label, #randomise-btn');
                 if (interactiveNode) {
-                    newVal += char; // Shield the interactive text from destruction
+                    newVal += char;
                 } else {
-                    // overwrite with non-breaking space to prevent HTML whitespace collapsing!
                     newVal += '\u00A0';
                     changed = true;
                     hits = true;
 
-                    // Expose destruction indices to word-game logic
-                    if (window.__wgDestroyChar) {
-                        window.__wgDestroyChar(tn.parentElement, i);
-                    }
+                    destroyChar(tn.parentElement, i);
                 }
             } else {
                 newVal += char;
@@ -410,11 +122,227 @@ function executeExplosion(exX, exY, radius, shared) {
         }
     }
 
-    // 3. Rebuild colliders if text changed
     if (hits && shared.updateColliders) {
         shared.updateColliders();
     }
 }
 
-window.__modes = window.__modes || [];
-window.__modes.push(tankMode);
+export const tankMode = {
+    id: "tank",
+    label: "Tank Controls",
+    stepMs: 16,
+
+    init(_shared) { },
+
+    activate(shared) {
+        resetTank();
+        shared.canvas.style.cursor = 'crosshair';
+    },
+
+    deactivate(shared) {
+        resetTank();
+        shared.canvas.style.cursor = 'default';
+        if (shared.overlayCtx) {
+            shared.overlayCtx.clearRect(0, 0, shared.canvas.width, shared.canvas.height);
+        }
+    },
+
+    onKeyDown(e, _shared) {
+        let k = e.key.toLowerCase();
+        if (keys.hasOwnProperty(k)) {
+            keys[k] = true;
+            e.preventDefault();
+        }
+        if (e.code === "Space") {
+            projectiles.push({
+                x: x,
+                y: y,
+                angle: angle
+            });
+            e.preventDefault();
+        }
+    },
+
+    onKeyUp(e, _shared) {
+        let k = e.key.toLowerCase();
+        if (keys.hasOwnProperty(k)) {
+            keys[k] = false;
+        }
+    },
+
+    getColliders(shared) {
+        return getColliders(shared, tankMode, { filterSliders: true });
+    },
+
+    step(shared) {
+        if (keys.a) angle -= TANK_TURN_SPEED;
+        if (keys.d) angle += TANK_TURN_SPEED;
+
+        if (keys.w || keys.s) {
+            let speed = keys.w ? TANK_SPEED : -TANK_SPEED * 0.6;
+
+            let dx = Math.sin(angle) * speed;
+            let dy = -Math.cos(angle) * speed;
+
+            let nextX = x + dx;
+            let nextY = y + dy;
+
+            let hit = false;
+            let allSolids = this.getColliders(shared);
+
+            for (let i = 0; i < allSolids.length; i++) {
+                let s = allSolids[i];
+                if (nextX >= s.left && nextX <= s.right && nextY >= s.top && nextY <= s.bottom) {
+                    hit = true;
+                    break;
+                }
+            }
+
+            if (!hit) {
+                x = nextX;
+                y = nextY;
+            }
+
+            if (x < 0) x = 0;
+            if (x > window.innerWidth) x = window.innerWidth;
+            if (y < 0) y = 0;
+        }
+
+        for (let i = projectiles.length - 1; i >= 0; i--) {
+            let p = projectiles[i];
+            p.x += Math.sin(p.angle) * PROJ_SPEED;
+            p.y -= Math.cos(p.angle) * PROJ_SPEED;
+
+            let hitSlider = false;
+            if (shared.isAboutSiteActive && shared.sliderMarkerColliders) {
+                for (let sm of shared.sliderMarkerColliders) {
+                    if (p.x >= sm.left - PROJ_RADIUS && p.x <= sm.right + PROJ_RADIUS &&
+                        p.y >= sm.top - (PROJ_SPEED * 2) && p.y <= sm.bottom + (PROJ_SPEED * 2)) {
+                        pushColorSliderAbsolute(p.x, 0);
+                        hitSlider = true;
+                        break;
+                    }
+                }
+            }
+            if (!hitSlider && shared.isAboutSiteActive && shared.sliderBarColliders) {
+                for (let sb of shared.sliderBarColliders) {
+                    if (p.x >= sb.left - PROJ_RADIUS && p.x <= sb.right + PROJ_RADIUS &&
+                        p.y >= sb.top - (PROJ_SPEED * 2) && p.y <= sb.bottom + (PROJ_SPEED * 2)) {
+                        pushColorSliderAbsolute(p.x, 0);
+                        hitSlider = true;
+                        break;
+                    }
+                }
+            }
+            if (hitSlider) {
+                explosions.push({
+                    x: p.x,
+                    y: p.y,
+                    r: 0,
+                    maxR: EXPLOSION_RADIUS,
+                    life: 1.0
+                });
+                executeExplosion(p.x, p.y, EXPLOSION_RADIUS, shared);
+                projectiles.splice(i, 1);
+                continue;
+            }
+
+            let hit = false;
+            let allSolids = this.getColliders(shared);
+
+            for (let s of allSolids) {
+                if (p.x >= s.left && p.x <= s.right && p.y >= s.top && p.y <= s.bottom) {
+                    hit = true;
+                    if (s.node) {
+                        let interactiveNode = s.node.closest('a, button, [role="option"], .select-toggle, #nav-more-label, #randomise-btn');
+                        if (interactiveNode) {
+                            p.hitLink = interactiveNode;
+                        }
+                    }
+                    break;
+                }
+            }
+
+            if (p.x < 0) p.x += window.innerWidth;
+            if (p.x > window.innerWidth) p.x -= window.innerWidth;
+            if (p.y < window.scrollY) p.y += window.innerHeight;
+            if (p.y > window.scrollY + window.innerHeight) p.y -= window.innerHeight;
+
+            if (hit) {
+                if (p.hitLink) {
+                    p.hitLink.click();
+                    projectiles.splice(i, 1);
+                } else {
+                    explosions.push({
+                        x: p.x,
+                        y: p.y,
+                        r: 0,
+                        maxR: EXPLOSION_RADIUS,
+                        life: 1.0
+                    });
+                    executeExplosion(p.x, p.y, EXPLOSION_RADIUS, shared);
+                    projectiles.splice(i, 1);
+                }
+            }
+        }
+
+        for (let i = explosions.length - 1; i >= 0; i--) {
+            let ex = explosions[i];
+            ex.r += (ex.maxR - ex.r) * 0.2;
+            ex.life -= 0.05;
+            if (ex.life <= 0) {
+                explosions.splice(i, 1);
+            }
+        }
+    },
+
+    render(shared) {
+        const { overlayCtx } = shared;
+        if (!overlayCtx) return;
+
+        overlayCtx.clearRect(0, 0, shared.canvas.width, shared.canvas.height);
+
+        overlayCtx.fillStyle = shared.COMP_HEX || "#40d060";
+        for (let p of projectiles) {
+            overlayCtx.beginPath();
+            overlayCtx.arc(p.x, p.y, PROJ_RADIUS, 0, Math.PI * 2);
+            overlayCtx.fill();
+            overlayCtx.lineWidth = 1;
+            overlayCtx.strokeStyle = "#1a1209";
+            overlayCtx.stroke();
+        }
+
+        for (let ex of explosions) {
+            overlayCtx.globalAlpha = Math.max(0, ex.life);
+            overlayCtx.beginPath();
+            overlayCtx.arc(ex.x, ex.y, ex.r, 0, Math.PI * 2);
+            overlayCtx.fillStyle = shared.COMP_HEX || "#40d060";
+            overlayCtx.fill();
+            overlayCtx.strokeStyle = shared.COMP_DARK_HEX || "#2a9d45";
+            overlayCtx.lineWidth = 2;
+            overlayCtx.stroke();
+        }
+        overlayCtx.globalAlpha = 1.0;
+
+        overlayCtx.save();
+        overlayCtx.translate(x, y);
+        overlayCtx.rotate(angle);
+
+        overlayCtx.fillStyle = shared.COMP_HEX || "#40d060";
+        overlayCtx.fillRect(-TANK_WIDTH / 2, -TANK_HEIGHT / 2, TANK_WIDTH, TANK_HEIGHT);
+
+        overlayCtx.strokeStyle = "#1a1209";
+        overlayCtx.lineWidth = 2;
+        overlayCtx.strokeRect(-TANK_WIDTH / 2, -TANK_HEIGHT / 2, TANK_WIDTH, TANK_HEIGHT);
+
+        overlayCtx.fillStyle = "#1a1209";
+        overlayCtx.fillRect(-2, -TANK_HEIGHT / 2 - 6, 4, TANK_HEIGHT / 2 + 6);
+
+        overlayCtx.beginPath();
+        overlayCtx.arc(0, 0, 4, 0, Math.PI * 2);
+        overlayCtx.fillStyle = "#1a1209";
+        overlayCtx.fill();
+
+        overlayCtx.restore();
+    }
+};

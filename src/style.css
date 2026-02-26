@@ -7,9 +7,7 @@
 :root {
   --tan: #d4b896;
   --comp-color: #3b82f6;
-  /* Fallback complementary color */
   --comp-dark-color: #1d4ed8;
-  /* Fallback darker complementary color */
   --black: #1a1209;
   --col-width: 660px;
   --border: 2px solid var(--black);
@@ -36,13 +34,11 @@ html,
 body {
   width: 100%;
   overflow-x: hidden;
-  /* no horizontal scrollbar */
   background: var(--tan);
   color: var(--black);
   font-family: "Courier New", Courier, monospace;
   font-size: 14px;
   line-height: 1.6;
-  /* disable text selection while painting canvas cells */
   user-select: none;
   -webkit-user-select: none;
 }
@@ -63,7 +59,6 @@ body {
   left: 0;
   z-index: 0;
   display: block;
-  /* canvas width/height set by JS */
 }
 
 /* ── Page wrapper so column can scroll naturally ─────────── */
@@ -72,7 +67,6 @@ body {
   z-index: 1;
   display: flex;
   justify-content: center;
-  /* padding so the column doesn't sit flush against the canvas top */
   padding: 32px 0 48px;
   min-height: 100vh;
 }
@@ -93,15 +87,12 @@ body {
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 80px);
-  /* accounts for 32px top + 48px bottom padding on #page */
 }
 
-/* Let the active page view push other content to the bottom */
 .page-view {
   flex-grow: 1;
 }
 
-/* Escape key hides the column (Escape again restores it) */
 #column.col-hidden {
   opacity: 0;
   pointer-events: none;
@@ -124,7 +115,6 @@ body {
   display: inline;
 }
 
-/* blinking block cursor after the title */
 #site-header h1::after {
   content: "█";
   animation: blink 1s step-end infinite;
@@ -132,12 +122,10 @@ body {
 }
 
 @keyframes blink {
-
   0%,
   100% {
     opacity: 1;
   }
-
   50% {
     opacity: 0;
   }
@@ -193,7 +181,7 @@ body {
   transition: background 0.08s, color 0.08s;
 }
 
-/* -- Nav Custom Select logic -- */
+/* -- Nav Custom Select -- */
 .nav-custom-select {
   flex: 1;
   border-right: 1px solid var(--black);
@@ -208,11 +196,8 @@ body {
 .nav-custom-select .select-options {
   top: 100%;
   bottom: auto;
-  /* Override default upward select-options behavior */
   left: -1px;
-  /* Align with the 1px border shift */
   width: calc(100% + 2px);
-  /* Stretch to cover borders */
   border-top: 1px solid var(--black);
   background: var(--tan);
 }
@@ -223,7 +208,6 @@ body {
   border-right: none;
   border-bottom: 1px solid var(--black);
   color: var(--black);
-  /* Override default var(--tan) */
 }
 
 .nav-custom-select .select-options li:last-child {
@@ -273,33 +257,6 @@ body {
   margin-bottom: 4px;
 }
 
-#wg-gamemode-list li {
-  margin-bottom: 5px;
-}
-
-#wg-gamemode-list li a {
-  display: block;
-  padding: 8px 10px;
-  cursor: pointer;
-  font-size: 0.9em;
-  border: 1px solid transparent;
-  color: var(--black);
-  text-decoration: none;
-  transition: background 0.1s, color 0.1s;
-}
-
-#wg-gamemode-list li a:hover,
-#wg-gamemode-list li a.hover-active {
-  background: var(--black);
-  color: var(--tan);
-}
-
-#wg-gamemode-list li a.wg-active {
-  background: var(--black);
-  color: var(--tan);
-  font-weight: bold;
-}
-
 .section a {
   color: var(--black);
   text-decoration: underline;
@@ -316,19 +273,15 @@ body {
   margin: 16px 0;
   position: relative;
   height: 24px;
-  /* Make sure container doesn't block slider interaction */
 }
 
 #color-slider-bar {
   position: absolute;
   top: 8px;
-  /* vertically center 8px tall bar in 24px container */
   left: 0;
   right: 0;
   height: 8px;
   border: 1px solid var(--black);
-  /* The gradient wraps the spectrum starting from Hue 33 (which perfectly matches #d4b896).
-     This means the visual slider explicitly mirrors the JS math under the hood (0% to 100% = Hue 33 to 393). */
   background: linear-gradient(to right,
       hsl(33, 42%, 71%),
       hsl(93, 42%, 71%),
@@ -384,7 +337,7 @@ body {
   left: 0;
 }
 
-/* ── GoL & Overlay controls strip ──────────────────────────────────── */
+/* ── GoL & Overlay controls strip ──────────────────────────── */
 #gol-controls,
 #overlay-controls {
   display: flex;
@@ -398,7 +351,6 @@ body {
 #gol-controls {
   border-top: var(--border);
   padding-bottom: 0px;
-  /* compress space between the two rows */
 }
 
 #overlay-controls {
@@ -408,9 +360,8 @@ body {
   z-index: 1000;
 }
 
-/* Make hint take up remaining space on the left */
-#gol-controls>span,
-#overlay-controls>span {
+#gol-controls > span,
+#overlay-controls > span {
   font-size: 0.78rem;
   letter-spacing: 0.06em;
   opacity: 0.7;
@@ -444,14 +395,12 @@ button.hover-active {
   display: inline-block;
 }
 
-/* toggle button inherits button styles; just suppress uppercase */
 .select-toggle {
   text-transform: none;
   letter-spacing: 0.04em;
   white-space: nowrap;
 }
 
-/* options list — opens upward above the controls bar */
 .select-options {
   position: absolute;
   bottom: calc(100% + 4px);
@@ -501,7 +450,7 @@ hr {
 }
 
 /* ═══════════════════════════════════════════
-   WORD ASSOCIATION GAME STYLES
+   WORD ASSOCIATION GAME
    ═══════════════════════════════════════════ */
 #wg-layout {
   display: flex;
@@ -550,7 +499,8 @@ hr {
   transition: background 0.1s, color 0.1s;
 }
 
-#wg-gamemode-list li a:hover {
+#wg-gamemode-list li a:hover,
+#wg-gamemode-list li a.hover-active {
   background: var(--black);
   color: var(--tan);
 }
@@ -641,7 +591,6 @@ hr {
     opacity: 0;
     transform: translateY(10px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);

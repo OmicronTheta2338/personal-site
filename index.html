@@ -6,8 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Personal website — a little corner of the old web." />
     <title>bit of fun</title>
-    <link rel="icon" href="sock rat cheese.jpg" type="image/jpeg" />
-    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="/sock rat cheese.jpg" type="image/jpeg" />
 </head>
 
 <body>
@@ -145,9 +144,9 @@
                         </div>
                         <div id="perf-scale"
                             style="position: relative; margin-left: 12px; font-size: 0.75rem; color: var(--black); display: flex; flex-direction: column; justify-content: space-between; height: 100px; margin-top: 8px;">
-                            <div style="line-height: 14px;">100%</div>
-                            <div style="line-height: 14px;">50%</div>
-                            <div style="line-height: 14px;">0%</div>
+                            <div style="line-height: 14px;">200MB</div>
+                            <div style="line-height: 14px;">100MB</div>
+                            <div style="line-height: 14px;">0MB</div>
                         </div>
                     </div>
                 </section>
@@ -188,7 +187,6 @@
                 <section class="section">
                     <h2>Word Association Game</h2>
                     <div id="wg-container">
-                        <!-- Ported Game DOM will go here, styled to match the column -->
                         <div id="wg-layout">
                             <aside id="wg-sidebar">
                                 <h3>Gamemodes</h3>
@@ -293,291 +291,7 @@
 
     </div><!-- /#page -->
 
-    <script>
-        // Stamp the current year in the footer without a build step
-        document.getElementById("yr").textContent = new Date().getFullYear();
-
-        // JavaScript-based router to prevent # anchor scrolling teleportation
-        function showPage(viewId) {
-            var views = document.querySelectorAll('.page-view');
-            var found = false;
-
-            views.forEach(function (view) {
-                if (view.id === viewId) {
-                    view.style.display = 'block';
-                    found = true;
-                } else {
-                    view.style.display = 'none';
-                }
-            });
-
-            // Default fallback
-            var finalViewId = viewId;
-            if (!found && document.getElementById('view-about-me')) {
-                document.getElementById('view-about-me').style.display = 'block';
-                finalViewId = 'view-about-me';
-            }
-
-            // Update top nav active states
-            document.querySelectorAll('#site-nav .nav-link, #nav-more-options .nav-link').forEach(function (el) {
-                if (el.getAttribute('data-view') === finalViewId) {
-                    el.classList.add('nav-active');
-                } else {
-                    el.classList.remove('nav-active');
-                }
-            });
-
-            // Also highlight the "More" button if its child is active
-            var moreBtn = document.getElementById('nav-more-toggle');
-            if (moreBtn) {
-                var isMoreActive = !!document.querySelector('#nav-more-options .nav-link.nav-active');
-                if (isMoreActive) {
-                    moreBtn.classList.add('nav-active');
-                } else {
-                    moreBtn.classList.remove('nav-active');
-                }
-            }
-
-            // Explicitly scroll to top so shorter pages aren't loaded scrolled-down
-            window.scrollTo(0, 0);
-
-            // Notify engine to recalculate canvas.height
-            window.dispatchEvent(new CustomEvent("pageChanged"));
-        }
-
-        function handleRouting() {
-            var hash = window.location.hash || '#about-me';
-            showPage('view-' + hash.substring(1));
-        }
-
-        window.addEventListener('hashchange', function (e) {
-            e.preventDefault(); // Stop native jump if possible (usually not possible here, must intercept click)
-            handleRouting();
-        });
-
-        // Intercept clicks on navigation links to trigger state change without scrolling
-        document.querySelectorAll('.nav-link').forEach(function (link) {
-            link.addEventListener('click', function (e) {
-                e.preventDefault();
-                var viewId = this.getAttribute('data-view');
-                var hashId = '#' + viewId.substring(5);
-
-                showPage(viewId);
-                // Update URL aesthetically without triggering the scroll jump
-                history.pushState(null, null, hashId);
-
-                // If it was a dropdown option, close the dropdown
-                var dropdownList = document.getElementById('nav-more-options');
-                if (dropdownList && !dropdownList.hidden) {
-                    dropdownList.hidden = true;
-                    document.getElementById('nav-more-toggle').setAttribute('aria-expanded', 'false');
-                }
-            });
-        });
-
-        // Dropdown Toggle Logic
-        var navDropdownToggle = document.getElementById('nav-more-toggle');
-        var navDropdownOptions = document.getElementById('nav-more-options');
-
-        if (navDropdownToggle && navDropdownOptions) {
-            navDropdownToggle.addEventListener('click', function (e) {
-                e.preventDefault();
-                var isHidden = navDropdownOptions.hidden;
-                navDropdownOptions.hidden = !isHidden;
-                navDropdownToggle.setAttribute('aria-expanded', !isHidden);
-            });
-
-            // Close dropdown when clicking outside
-            document.addEventListener('click', function (e) {
-                if (!navDropdownToggle.contains(e.target) && !navDropdownOptions.contains(e.target)) {
-                    navDropdownOptions.hidden = true;
-                    navDropdownToggle.setAttribute('aria-expanded', 'false');
-                }
-            });
-        }
-
-        handleRouting(); // Initial routing
-
-        // Hide browser link previews (status bar URL) while preserving functionality
-        document.querySelectorAll('a[href]').forEach(function (a) {
-            var href = a.getAttribute('href');
-            var target = a.getAttribute('target');
-            var rel = a.getAttribute('rel');
-
-            // Remove href to prevent the browser's default status bar preview
-            a.removeAttribute('href');
-            a.setAttribute('data-href', href);
-
-            // Maintain link-like styling and accessibility
-            a.style.cursor = 'pointer';
-            a.setAttribute('tabindex', '0');
-
-            function navigate(e) {
-                e.preventDefault();
-                if (target === '_blank') {
-                    window.open(href, '_blank', rel && rel.indexOf('noopener') !== -1 ? 'noopener' : '');
-                } else {
-                    window.location.href = href;
-                }
-            }
-
-            a.addEventListener('click', navigate);
-            a.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') navigate(e);
-            });
-        });
-
-        // Color Slider Logic
-        (function () {
-            var sliderContainer = document.getElementById('color-slider-container');
-            var sliderMarker = document.getElementById('color-slider-marker');
-            var sliderBar = document.getElementById('color-slider-bar');
-            var root = document.documentElement;
-
-            var isDragging = false;
-
-            // HSL to RGB utility
-            function hue2rgb(p, q, t) {
-                if (t < 0) t += 1;
-                if (t > 1) t -= 1;
-                if (t < 1 / 6) return p + (q - p) * 6 * t;
-                if (t < 1 / 2) return q;
-                if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-                return p;
-            }
-
-            function hslToHex(h, s, l) {
-                var r, g, b;
-
-                // Allow percentage strings for saturation and lightness
-                s = typeof s === 'string' && s.includes('%') ? parseFloat(s) / 100 : s;
-                l = typeof l === 'string' && l.includes('%') ? parseFloat(l) / 100 : l;
-
-                if (s === 0) {
-                    r = g = b = l; // achromatic
-                } else {
-                    var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-                    var p = 2 * l - q;
-                    r = hue2rgb(p, q, h / 360 + 1 / 3);
-                    g = hue2rgb(p, q, h / 360);
-                    b = hue2rgb(p, q, h / 360 - 1 / 3);
-                }
-                var toHex = function (x) {
-                    var hex = Math.round(x * 255).toString(16);
-                    return hex.length === 1 ? '0' + hex : hex;
-                };
-                return '#' + toHex(r) + toHex(g) + toHex(b);
-            }
-
-            // The default base colors
-            var saturation = 0.42;
-            var lightness = 0.71;
-            // The exact hue for #d4b896 is ~33. 
-            var baseHue = 33;
-
-            var currentPercentage = 0;
-
-            function updateColorFromPercentage(percentage) {
-                if (percentage < 0) percentage = 0;
-                if (percentage > 1) percentage = 1;
-                currentPercentage = percentage;
-
-                // Move marker
-                sliderMarker.style.left = (percentage * 100) + '%';
-
-                // Map percentage to hue (baseHue to baseHue+360), so 0% and 100% naturally wrap.
-                var hue = (baseHue + percentage * 360) % 360;
-
-                var baseHex = hslToHex(hue, saturation, lightness);
-                var compHue = (hue + 180) % 360;
-
-                // Slightly higher saturation for complementary looks better
-                var compHex = hslToHex(compHue, 0.60, 0.55);
-                var compDarkHex = hslToHex(compHue, 0.70, 0.40);
-
-                root.style.setProperty('--tan', baseHex);
-                root.style.setProperty('--comp-color', compHex);
-                root.style.setProperty('--comp-dark-color', compDarkHex);
-
-                // Publish to shared config if engine exposes it,
-                // Engine sets its own shared object properties. We can expose it via window
-                if (!window.__sharedColors) window.__sharedColors = {};
-                window.__sharedColors.TAN_HEX = baseHex;
-                window.__sharedColors.COMP_HEX = compHex;
-                window.__sharedColors.COMP_DARK_HEX = compDarkHex;
-                window.__sharedColors.HUE = hue;
-
-                // Fire custom event to notify engine of color update
-                window.dispatchEvent(new CustomEvent('colorChanged', {
-                    detail: { baseHex, compHex, compDarkHex, hue }
-                }));
-            }
-
-            function onPointerMove(e) {
-                if (!isDragging) return;
-                var rect = sliderContainer.getBoundingClientRect();
-                var pos = e.clientX - rect.left;
-                var percentage = pos / rect.width;
-                updateColorFromPercentage(percentage);
-            }
-
-            function onPointerUp() {
-                isDragging = false;
-                window.removeEventListener('mousemove', onPointerMove);
-                window.removeEventListener('mouseup', onPointerUp);
-                window.removeEventListener('touchmove', onPointerMove);
-                window.removeEventListener('touchend', onPointerUp);
-            }
-
-            function onPointerDown(e) {
-                isDragging = true;
-                onPointerMove(e.touches ? e.touches[0] : e);
-                window.addEventListener('mousemove', onPointerMove);
-                window.addEventListener('mouseup', onPointerUp);
-                window.addEventListener('touchmove', onPointerMove);
-                window.addEventListener('touchend', onPointerUp);
-            }
-
-            sliderContainer.addEventListener('mousedown', onPointerDown);
-            sliderContainer.addEventListener('touchstart', onPointerDown, { passive: false });
-
-            // Expose for games to push
-            window.__setColorSliderPercentage = function (p) {
-                updateColorFromPercentage(p);
-            };
-            window.__getColorSliderPercentage = function () {
-                return currentPercentage;
-            };
-            window.__pushColorSliderAbsolute = function (newPxX, widthOffset) {
-                var rect = sliderContainer.getBoundingClientRect();
-                var pos = newPxX - rect.left + widthOffset;
-                var percentage = pos / rect.width;
-                updateColorFromPercentage(percentage);
-                return currentPercentage === 0 || currentPercentage === 1; // returned true if hit ends
-            };
-
-            // Initialize defaults
-            updateColorFromPercentage(0); // init to "original"
-        })();
-    </script>
-
-    <!-- Load Word Game Data -->
-    <script src="data/characters.js"></script>
-    <script src="data/situations.js"></script>
-    <script src="data/sayings.js"></script>
-    <script src="data/adjectives.js"></script>
-    <script src="data/topics.js"></script>
-    <script src="data/all-words.js"></script>
-
-    <!-- Load modes first so window.__modes is populated before engine.js runs.
-         To add a new game: create modes/mygame.js and add a <script> tag here. -->
-    <script src="modes/ca.js"></script>
-    <script src="modes/snake.js"></script>
-    <script src="modes/minesweeper.js"></script>
-    <script src="modes/platformer.js"></script>
-    <script src="modes/tank.js"></script>
-    <script src="word-game.js"></script>
-    <script src="engine.js"></script>
+    <script type="module" src="/src/main.js"></script>
 </body>
 
 </html>

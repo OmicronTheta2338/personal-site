@@ -1,4 +1,4 @@
-window.CHARACTERS = [
+export const CHARACTERS = [
     "Business Man",
     "Cleaner",
     "Vampire",

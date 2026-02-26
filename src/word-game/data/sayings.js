@@ -1,4 +1,4 @@
-window.SAYINGS = [
+export const SAYINGS = [
     "Let's cross that bridge when we come to it",
     "When in Rome, do as the Romans",
     "It's all Greek to me",

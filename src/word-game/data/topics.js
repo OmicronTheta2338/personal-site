@@ -1,4 +1,4 @@
-window.TOPICS = [
+export const TOPICS = [
     "Cooking",
     "Cleaning",
     "Film",

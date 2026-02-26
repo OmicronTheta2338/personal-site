@@ -1,4 +1,4 @@
-window.ADJECTIVES = [
+export const ADJECTIVES = [
     "Ginger",
     "French",
     "Determined",
