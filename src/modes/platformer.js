@@ -5,6 +5,7 @@
 import { getColliders } from '../utils/collision-helpers.js';
 import { pushColorSliderAbsolute } from '../color-slider.js';
 import { handleRouting } from '../router.js';
+import { shared as sharedState } from '../shared.js';
 
 var px = 100, py = 100;
 var vx = 0, vy = 0;
@@ -199,9 +200,6 @@ var platformerMode = {
     init: function (_shared) { },
 
     activate: function (shared) {
-        document.getElementById("gol-controls").style.position = "relative";
-        document.getElementById("gol-controls").style.zIndex = "1000";
-
         if (!document.getElementById("platformer-player")) {
             var el = document.createElement("div");
             el.id = "platformer-player";
@@ -230,19 +228,25 @@ var platformerMode = {
             navLinks[i].addEventListener('click', onNavClick);
         }
 
-        var aboutMeLink = document.querySelector('a[data-view="view-about-me"]');
-        if (aboutMeLink) {
-            var rect = aboutMeLink.getBoundingClientRect();
-            if (rect.width > 0) {
-                px = rect.left + rect.width / 2 - SIZE / 2 + window.scrollX;
-                py = rect.top + window.scrollY - SIZE - 10;
+        if (sharedState.platformerSpawnPos) {
+            px = sharedState.platformerSpawnPos.x;
+            py = sharedState.platformerSpawnPos.y;
+            sharedState.platformerSpawnPos = null;
+        } else {
+            var aboutMeLink = document.querySelector('a[data-view="view-about-me"]');
+            if (aboutMeLink) {
+                var rect = aboutMeLink.getBoundingClientRect();
+                if (rect.width > 0) {
+                    px = rect.left + rect.width / 2 - SIZE / 2 + window.scrollX;
+                    py = rect.top + window.scrollY - SIZE - 10;
+                } else {
+                    px = shared.canvas.width / 2;
+                    py = Math.max(100, window.scrollY + 100);
+                }
             } else {
                 px = shared.canvas.width / 2;
                 py = Math.max(100, window.scrollY + 100);
             }
-        } else {
-            px = shared.canvas.width / 2;
-            py = Math.max(100, window.scrollY + 100);
         }
         vx = 0; vy = 0;
     },
@@ -250,12 +254,6 @@ var platformerMode = {
     deactivate: function () {
         var el = document.getElementById("platformer-player");
         if (el) el.style.display = "none";
-
-        var controls = document.getElementById("gol-controls");
-        if (controls) {
-            controls.style.position = "";
-            controls.style.zIndex = "";
-        }
 
         if (activeLink) {
             activeLink.el.classList.remove("hover-active");
@@ -350,6 +348,15 @@ var platformerMode = {
             var screenY = py - window.scrollY;
             if (screenY < 150) window.scrollBy(0, screenY - 150);
             if (screenY > window.innerHeight - 150) window.scrollBy(0, screenY - (window.innerHeight - 150));
+        }
+
+        if (sharedState.platformerDoor) {
+            var d = sharedState.platformerDoor;
+            var hw = SIZE / 2, hh = SIZE / 2;
+            if (px + hw > d.left && px - hw < d.right &&
+                py + hh > d.top && py - hh < d.bottom) {
+                window.dispatchEvent(new CustomEvent('doorReached', { detail: { from: 'platformer', headPx: px, headPy: py } }));
+            }
         }
 
         if (py > shared.canvas.height + 100) {

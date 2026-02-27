@@ -8,6 +8,7 @@
 import { getColliders } from '../utils/collision-helpers.js';
 import { pushColorSliderAbsolute } from '../color-slider.js';
 import { destroyChar } from '../word-game/word-game.js';
+import { shared as sharedState } from '../shared.js';
 
 const TANK_WIDTH = 16;
 const TANK_HEIGHT = 20;
@@ -27,25 +28,30 @@ let projectiles = [];
 let explosions = [];
 
 function resetTank() {
-    let spawnX = window.innerWidth / 2;
-    let spawnY = window.scrollY + 200;
-
-    let dropdown = document.getElementById('overlay-dropdown');
-    if (dropdown) {
-        let rect = dropdown.getBoundingClientRect();
-        spawnX = rect.left - TANK_WIDTH - 20 + window.scrollX;
-        spawnY = rect.top + rect.height / 2 + window.scrollY;
+    if (sharedState.tankSpawnPos) {
+        x = sharedState.tankSpawnPos.x;
+        y = sharedState.tankSpawnPos.y;
+        sharedState.tankSpawnPos = null;
     } else {
-        let col = document.getElementById('column');
-        if (col) {
-            let rect = col.getBoundingClientRect();
-            spawnX = rect.left + rect.width / 2 + window.scrollX;
-            spawnY = rect.bottom - 40 + window.scrollY;
-        }
-    }
+        let spawnX = window.innerWidth / 2;
+        let spawnY = window.scrollY + 200;
 
-    x = spawnX;
-    y = spawnY;
+        let dropdown = document.getElementById('overlay-dropdown');
+        if (dropdown) {
+            let rect = dropdown.getBoundingClientRect();
+            spawnX = rect.left - TANK_WIDTH - 20 + window.scrollX;
+            spawnY = rect.top + rect.height / 2 + window.scrollY;
+        } else {
+            let col = document.getElementById('column');
+            if (col) {
+                let rect = col.getBoundingClientRect();
+                spawnX = rect.left + rect.width / 2 + window.scrollX;
+                spawnY = rect.bottom - 40 + window.scrollY;
+            }
+        }
+        x = spawnX;
+        y = spawnY;
+    }
     angle = 0;
     keys = { w: false, a: false, s: false, d: false };
     projectiles = [];

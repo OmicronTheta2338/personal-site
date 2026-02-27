@@ -8,8 +8,52 @@
 import { MODES } from './modes/index.js';
 import { shared, colors } from './shared.js';
 import { buildCharacterColliders } from './colliders.js';
+import { setCAStepMs } from './modes/ca.js';
 
 const CELL = 12;
+
+let currentMode = null;
+let overlayMode = null;
+
+export function selectMode(id) {
+    const mode = MODES.find(m => m.id === id);
+    if (!mode) return;
+    if (currentMode && currentMode.deactivate) currentMode.deactivate();
+    currentMode = mode;
+    shared.currentMode = currentMode;
+    if (currentMode.activate) currentMode.activate(shared);
+
+    document.querySelectorAll('.rule-label-text').forEach(el => {
+        el.textContent = mode.label;
+    });
+    document.querySelectorAll('.rule-options-list li').forEach(li => {
+        li.classList.toggle('selected', li.dataset.value === id);
+    });
+}
+
+export function setOverlayMode(modeId) {
+    if (overlayMode && overlayMode.deactivate) overlayMode.deactivate(shared);
+
+    if (modeId === "none") {
+        overlayMode = null;
+    } else {
+        overlayMode = MODES.find(m => m.id === modeId);
+        buildCharacterColliders(shared);
+        if (overlayMode && overlayMode.activate) overlayMode.activate(shared);
+    }
+}
+
+export function randomise() {
+    if (currentMode && currentMode.onRandomise) currentMode.onRandomise(shared);
+}
+
+export function setStepMs(ms) {
+    setCAStepMs(ms);
+}
+
+export function getOverlayMode() {
+    return overlayMode;
+}
 
 export function initEngine() {
     const canvas = document.getElementById("life-canvas");
@@ -17,14 +61,6 @@ export function initEngine() {
     const overlayCanvas = document.getElementById("overlay-canvas");
     const overlayCtx = overlayCanvas ? overlayCanvas.getContext("2d") : null;
     const column = document.getElementById("column");
-    const rndBtn = document.getElementById("randomise-btn");
-    const ruleToggle = document.getElementById("rule-toggle");
-    const ruleLabel = document.getElementById("rule-label");
-    const ruleOpts = document.getElementById("rule-options");
-    const overlayToggle = document.getElementById("overlay-toggle");
-    const overlayLabel = document.getElementById("overlay-label");
-    const overlayOpts = document.getElementById("overlay-options");
-    const overlayHint = document.getElementById("overlay-hint");
 
     const COLS = Math.ceil(window.innerWidth / CELL);
     const ROWS = Math.max(Math.ceil(window.innerHeight / CELL), 1);
@@ -67,48 +103,19 @@ export function initEngine() {
             if (overlayCanvas) overlayCanvas.height = newHeight;
             window.dispatchEvent(new CustomEvent('canvasResized'));
         }
+
+        const cr = column.getBoundingClientRect();
+        shared.COL_TOP_CELL = Math.floor((cr.top + window.scrollY) / CELL);
+        shared.COL_BOTTOM_CELL = Math.ceil((cr.bottom + window.scrollY) / CELL);
+
         buildCharacterColliders(shared);
     }
 
     window.addEventListener('resize', resizeCanvas);
     window.addEventListener('pageChanged', resizeCanvas);
+    window.addEventListener('contentRevealed', resizeCanvas);
     window.addEventListener('hashchange', shared.updateColliders);
     document.addEventListener('click', () => buildCharacterColliders(shared));
-    if (ruleToggle) ruleToggle.addEventListener('click', shared.updateColliders);
-    if (overlayToggle) overlayToggle.addEventListener('click', shared.updateColliders);
-
-    let currentMode = null;
-    let overlayMode = null;
-
-    function selectMode(id) {
-        const mode = MODES.find(m => m.id === id);
-        if (!mode) return;
-        if (currentMode && currentMode.deactivate) currentMode.deactivate();
-        currentMode = mode;
-        shared.currentMode = currentMode;
-        if (currentMode.activate) currentMode.activate(shared);
-    }
-
-    function setOverlayMode(modeId) {
-        if (overlayMode && overlayMode.deactivate) overlayMode.deactivate(shared);
-
-        if (modeId === "none") {
-            overlayMode = null;
-            overlayHint.textContent = "none active";
-        } else {
-            overlayMode = MODES.find(m => m.id === modeId);
-            buildCharacterColliders(shared);
-            if (overlayMode && overlayMode.activate) overlayMode.activate(shared);
-
-            if (modeId === "platformer") {
-                overlayHint.textContent = "A/D to move; W to jump; Enter to click";
-            } else if (modeId === "snake") {
-                overlayHint.textContent = "W/A/S/D to steer; bump links to click";
-            } else if (modeId === "tank") {
-                overlayHint.textContent = "W/S move; A/D turn; Space to shoot";
-            }
-        }
-    }
 
     MODES.forEach(m => { if (m.init) m.init(shared); });
     selectMode(MODES[0].id);
@@ -124,31 +131,6 @@ export function initEngine() {
     function loop(ts) {
         shared.frameCount++;
 
-        var perfMarker = document.getElementById("perf-marker");
-        var viewAboutSite = document.getElementById("view-about-site");
-        if (perfMarker && viewAboutSite && getComputedStyle(viewAboutSite).display !== "none") {
-            var resourceUsage = 0;
-            if (performance.memory) {
-                var usedMB = performance.memory.usedJSHeapSize / (1024 * 1024);
-                resourceUsage = Math.max(0, Math.min(1, usedMB / 200));
-            }
-
-            var newTop = (1 - resourceUsage) * 86;
-            perfMarker.style.top = newTop + "px";
-
-            if (shared.textColliders) {
-                for (var i = 0; i < shared.textColliders.length; i++) {
-                    var tc = shared.textColliders[i];
-                    if (tc.isPerfMarker) {
-                        var rect = perfMarker.getBoundingClientRect();
-                        tc.top = rect.top + window.scrollY;
-                        tc.bottom = rect.bottom + window.scrollY;
-                        break;
-                    }
-                }
-            }
-        }
-
         const ms = typeof currentMode.stepMs === "function"
             ? currentMode.stepMs()
             : currentMode.stepMs;
@@ -159,23 +141,103 @@ export function initEngine() {
             lastStep = ts;
         }
 
-        if (overlayMode && typeof overlayMode.step === 'function') {
-            const overlayMs = typeof overlayMode.stepMs === "function" ? overlayMode.stepMs() : (overlayMode.stepMs || 16);
-            if (!overlayMode._lastStep) overlayMode._lastStep = 0;
-            if (ts - overlayMode._lastStep >= overlayMs) {
-                overlayMode.step(shared);
-                overlayMode._lastStep = ts;
+        const activeOverlay = overlayMode;  // snapshot — step() may null it via doorReached
+        if (activeOverlay && typeof activeOverlay.step === 'function') {
+            const overlayMs = typeof activeOverlay.stepMs === "function" ? activeOverlay.stepMs() : (activeOverlay.stepMs || 16);
+            if (!activeOverlay._lastStep) activeOverlay._lastStep = 0;
+            if (ts - activeOverlay._lastStep >= overlayMs) {
+                activeOverlay.step(shared);
+                activeOverlay._lastStep = ts;
             }
         }
 
         currentMode.render(shared);
-        if (overlayMode) overlayMode.render(shared);
+        if (activeOverlay) activeOverlay.render(shared);
         requestAnimationFrame(loop);
     }
     requestAnimationFrame(loop);
 
-    rndBtn.addEventListener("click", () => {
-        if (currentMode.onRandomise) currentMode.onRandomise(shared);
+    // Event delegation for inline controls (randomise, rule dropdowns, overlay buttons)
+    document.addEventListener("click", function (e) {
+        const actionEl = e.target.closest("[data-action]");
+        if (!actionEl) return;
+
+        const action = actionEl.dataset.action;
+
+        if (action === "randomise") {
+            randomise();
+            return;
+        }
+
+        if (action === "rule-toggle") {
+            e.stopPropagation();
+            const list = actionEl.closest('.inline-rule-select').querySelector('.rule-options-list');
+            if (!list) return;
+            const wasHidden = list.hidden;
+            document.querySelectorAll('.rule-options-list').forEach(ul => { ul.hidden = true; });
+            list.hidden = !wasHidden;
+            actionEl.setAttribute("aria-expanded", String(wasHidden));
+            shared.updateColliders();
+            return;
+        }
+
+        if (action === "set-overlay") {
+            const modeId = actionEl.dataset.mode;
+            const btnRect = actionEl.getBoundingClientRect();
+            const spawnX = btnRect.left + window.scrollX + btnRect.width / 2;
+            const spawnY = btnRect.top + window.scrollY - CELL;
+
+            if (modeId === 'snake') {
+                shared.snakeConfig = {
+                    spawnCol: Math.floor(spawnX / CELL),
+                    spawnRow: Math.floor(spawnY / CELL),
+                    spawnDir: { dc: 1, dr: 0 },
+                };
+            } else if (modeId === 'platformer') {
+                shared.platformerSpawnPos = { x: spawnX, y: spawnY };
+            } else if (modeId === 'tank') {
+                shared.tankSpawnPos = { x: spawnX, y: spawnY };
+            }
+
+            setOverlayMode(modeId);
+            return;
+        }
+
+        if (action === "start-minesweeper") {
+            selectMode("minesweeper");
+            return;
+        }
+
+        if (action === "start-snake") {
+            window.dispatchEvent(new CustomEvent('tourStartSnake'));
+            return;
+        }
+    });
+
+    document.addEventListener("click", function (e) {
+        const li = e.target.closest('.rule-options-list li');
+        if (!li) return;
+        selectMode(li.dataset.value);
+        const list = li.closest('.rule-options-list');
+        if (list) {
+            list.hidden = true;
+            const toggle = list.parentElement.querySelector('[data-action="rule-toggle"]');
+            if (toggle) toggle.setAttribute("aria-expanded", "false");
+        }
+        shared.updateColliders();
+    });
+
+    // Close all open rule dropdowns on any click
+    document.addEventListener("click", function (e) {
+        if (!e.target.closest('[data-action="rule-toggle"]')) {
+            document.querySelectorAll('.rule-options-list').forEach(ul => {
+                ul.hidden = true;
+            });
+            document.querySelectorAll('[data-action="rule-toggle"]').forEach(btn => {
+                btn.setAttribute("aria-expanded", "false");
+            });
+        }
+        setTimeout(shared.updateColliders, 10);
     });
 
     document.addEventListener("keydown", e => {
@@ -240,60 +302,7 @@ export function initEngine() {
         Array.from(e.touches).forEach(tryPaint);
     }, { passive: false });
 
-    ruleToggle.addEventListener("click", e => {
-        e.stopPropagation();
-        const open = !ruleOpts.hidden;
-        ruleOpts.hidden = open;
-        ruleToggle.setAttribute("aria-expanded", String(!open));
-    });
-
-    ruleOpts.addEventListener("click", e => {
-        const li = e.target.closest("li");
-        if (!li) return;
-        selectMode(li.dataset.value);
-        ruleLabel.textContent = li.textContent.trim();
-        ruleOpts.querySelectorAll("li").forEach(el =>
-            el.classList.toggle("selected", el === li)
-        );
-        ruleOpts.hidden = true;
-        ruleToggle.setAttribute("aria-expanded", "false");
-    });
-
-    if (overlayToggle && overlayOpts) {
-        overlayToggle.addEventListener("click", e => {
-            e.stopPropagation();
-            const open = !overlayOpts.hidden;
-            overlayOpts.hidden = open;
-            overlayToggle.setAttribute("aria-expanded", String(!open));
-
-            ruleOpts.hidden = true;
-            ruleToggle.setAttribute("aria-expanded", "false");
-        });
-
-        overlayOpts.addEventListener("click", e => {
-            const li = e.target.closest("li");
-            if (!li) return;
-            setOverlayMode(li.dataset.value);
-            overlayLabel.textContent = li.textContent.trim();
-            overlayOpts.querySelectorAll("li").forEach(el =>
-                el.classList.toggle("selected", el === li)
-            );
-            overlayOpts.hidden = true;
-            overlayToggle.setAttribute("aria-expanded", "false");
-        });
-    }
-
-    document.addEventListener("click", function () {
-        ruleOpts.hidden = true;
-        ruleToggle.setAttribute("aria-expanded", "false");
-        if (overlayOpts) {
-            overlayOpts.hidden = true;
-            if (overlayToggle) overlayToggle.setAttribute("aria-expanded", "false");
-        }
-        setTimeout(shared.updateColliders, 10);
-    });
-
-    window.addEventListener('colorChanged', function (e) {
+    window.addEventListener('colorChanged', function () {
         // colors object is already updated by color-slider.js
     });
 }

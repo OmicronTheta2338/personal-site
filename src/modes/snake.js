@@ -6,11 +6,16 @@
  */
 
 import { pushColorSliderAbsolute } from '../color-slider.js';
+import { shared } from '../shared.js';
+import { isCellAlive, killCellAt } from './ca.js';
 
 const STEP_MS = 130;
 const TURBO_MS = 25;
 const HOLD_DELAY = 350;
-const RED_HEX = "#c0392b";
+
+function isTutorial(shared) {
+    return !!(shared.snakeConfig && shared.snakeConfig.appleBounds);
+}
 
 const DIRS = {
     w: { dc: 0, dr: -1 },
@@ -25,9 +30,10 @@ let holdStart = 0;
 let activeLink = null;
 
 function isWall(c, r, shared) {
-    const { COLS, ROWS, CELL, textColliders, columnHidden } = shared;
+    const { COLS, CELL, textColliders, columnHidden } = shared;
+    const maxRow = Math.ceil(shared.canvas.height / CELL);
 
-    if (c < 0 || c >= COLS || r < 0 || r >= ROWS) return true;
+    if (c < 0 || c >= COLS || r < 0 || r >= maxRow) return true;
 
     if (!columnHidden && textColliders) {
         const left = c * CELL;
@@ -44,7 +50,8 @@ function isWall(c, r, shared) {
         }
     }
 
-    if (shared.currentMode && shared.currentMode.getSolids) {
+    // In free-roam mode CA cells are eaten as food, not walls.
+    if (isTutorial(shared) && shared.currentMode && shared.currentMode.getSolids) {
         if (!shared.columnHidden &&
             c >= shared.COL_LEFT_CELL && c < shared.COL_RIGHT_CELL &&
             r >= shared.COL_TOP_CELL && r < shared.COL_BOTTOM_CELL) {
@@ -69,11 +76,23 @@ function isWall(c, r, shared) {
 }
 
 function randomApple(body, shared) {
-    const { COLS, ROWS } = shared;
-    let c, r;
+    const { COLS, ROWS, CELL } = shared;
+    const head = body[0];
+    const maxRow = Math.ceil(shared.canvas.height / CELL);
+    const bounds = shared.snakeConfig && shared.snakeConfig.appleBounds;
+    let c, r, attempts = 0;
     do {
-        c = Math.floor(Math.random() * COLS);
-        r = Math.floor(Math.random() * ROWS);
+        if (bounds) {
+            c = bounds.cellLeft + Math.floor(Math.random() * (bounds.cellRight - bounds.cellLeft));
+            r = bounds.cellTop + Math.floor(Math.random() * (bounds.cellBottom - bounds.cellTop));
+        } else {
+            c = Math.floor(Math.random() * COLS);
+            const minR = Math.max(0, head.r - ROWS);
+            const maxR = Math.min(maxRow - 1, head.r + ROWS);
+            r = minR + Math.floor(Math.random() * (maxR - minR + 1));
+        }
+        attempts++;
+        if (attempts > 1000) break;
     } while (
         isWall(c, r, shared) ||
         body.some(b => b.c === c && b.r === r)
@@ -82,21 +101,38 @@ function randomApple(body, shared) {
 }
 
 function initSnake(shared) {
-    const { COL_LEFT_CELL, CELL } = shared;
+    const { CELL } = shared;
+    const cfg = shared.snakeConfig;
 
-    const sc = Math.max(3, Math.floor(COL_LEFT_CELL / 2));
-    const sr = Math.floor((window.scrollY + 200) / CELL);
+    let sc, sr, dir;
+    if (cfg && cfg.spawnCol !== undefined) {
+        sc = cfg.spawnCol;
+        sr = cfg.spawnRow;
+        dir = cfg.spawnDir || { dc: 0, dr: 1 };
+    } else {
+        const h1 = document.querySelector('#site-header h1');
+        if (h1) {
+            const rect = h1.getBoundingClientRect();
+            sc = Math.floor((rect.left + window.scrollX) / CELL) - 2;
+            sr = Math.floor((rect.top + window.scrollY + rect.height / 2) / CELL);
+        } else {
+            sc = Math.max(3, Math.floor(shared.COL_LEFT_CELL / 2));
+            sr = Math.floor((window.scrollY + 50) / CELL);
+        }
+        dir = { dc: 1, dr: 0 };
+    }
+    sc = Math.max(3, sc);
 
     const body = [
         { c: sc, r: sr },
-        { c: sc - 1, r: sr },
-        { c: sc - 2, r: sr },
+        { c: sc - dir.dc, r: sr - dir.dr },
+        { c: sc - dir.dc * 2, r: sr - dir.dr * 2 },
     ];
     snake = {
         body,
-        dir: { dc: 1, dr: 0 },
-        nextDir: { dc: 1, dr: 0 },
-        apple: randomApple(body, shared),
+        dir: { dc: dir.dc, dr: dir.dr },
+        nextDir: { dc: dir.dc, dr: dir.dr },
+        apple: isTutorial(shared) ? randomApple(body, shared) : null,
         alive: true,
         score: 0,
     };
@@ -166,6 +202,10 @@ function checkSliderPush(c, r, dc, shared) {
     return { isWall: false, pushed: false };
 }
 
+export function respawnSnake(sh) {
+    initSnake(sh || shared);
+}
+
 export const snakeMode = {
     id: "snake",
     label: "Snake",
@@ -202,10 +242,20 @@ export const snakeMode = {
         const newHead = { c: head.c + snake.dir.dc, r: head.r + snake.dir.dr };
 
         checkLinkIntersection(newHead.c, newHead.r, shared);
+        if (!snake) return;
 
         const pushResult = checkSliderPush(newHead.c, newHead.r, snake.dir.dc, shared);
         if (pushResult.isWall) {
             snake.alive = false; return;
+        }
+
+        // In free-roam mode, eat alive CA cells before the wall check so they
+        // don't block movement. The cell is killed here; isWall then sees it as empty.
+        const tutorial = isTutorial(shared);
+        let ateCA = false;
+        if (!tutorial && isCellAlive(newHead.c, newHead.r)) {
+            killCellAt(newHead.c, newHead.r);
+            ateCA = true;
         }
 
         if (isWall(newHead.c, newHead.r, shared)) { snake.alive = false; return; }
@@ -214,11 +264,32 @@ export const snakeMode = {
         }
 
         snake.body.unshift(newHead);
-        if (newHead.c === snake.apple.c && newHead.r === snake.apple.r) {
+        if (ateCA) {
+            snake.score++;
+        } else if (tutorial && snake.apple && newHead.c === snake.apple.c && newHead.r === snake.apple.r) {
             snake.score++;
             snake.apple = randomApple(snake.body, shared);
+            window.dispatchEvent(new CustomEvent('snakeAteApple', { detail: { score: snake.score } }));
         } else {
             snake.body.pop();
+        }
+
+        if (shared.snakeDoor) {
+            const d = shared.snakeDoor;
+            const headLeft = newHead.c * shared.CELL;
+            const headTop = newHead.r * shared.CELL;
+            const headRight = headLeft + shared.CELL;
+            const headBottom = headTop + shared.CELL;
+            if (headRight > d.left && headLeft < d.right &&
+                headBottom > d.top && headTop < d.bottom) {
+                window.dispatchEvent(new CustomEvent('doorReached', {
+                    detail: {
+                        from: 'snake',
+                        headPx: headLeft + shared.CELL / 2,
+                        headPy: headTop + shared.CELL / 2,
+                    }
+                }));
+            }
         }
 
         const { CELL } = shared;
@@ -236,8 +307,19 @@ export const snakeMode = {
 
         if (!snake) return;
 
-        overlayCtx.fillStyle = RED_HEX;
-        overlayCtx.fillRect(snake.apple.c * CELL, snake.apple.r * CELL, CELL, CELL);
+        // Keep CA cells dead under the snake body every frame — the CA ticks
+        // independently so cells can be born between snake steps without this.
+        if (snake.alive) {
+            for (let i = 0; i < snake.body.length; i++) {
+                const seg = snake.body[i];
+                if (isCellAlive(seg.c, seg.r)) killCellAt(seg.c, seg.r);
+            }
+        }
+
+        if (snake.apple) {
+            overlayCtx.fillStyle = BLACK_HEX;
+            overlayCtx.fillRect(snake.apple.c * CELL, snake.apple.r * CELL, CELL, CELL);
+        }
 
         snake.body.forEach((cell, i) => {
             const isHead = (i === 0);
@@ -301,7 +383,7 @@ export const snakeMode = {
         if (!snake || !snake.alive) return [];
         const solids = [];
 
-        if (snake.apple) {
+        if (snake.apple && isTutorial(shared)) {
             solids.push({
                 left: snake.apple.c * shared.CELL,
                 right: snake.apple.c * shared.CELL + shared.CELL,

@@ -44,4 +44,9 @@ export const shared = {
         return v ? getComputedStyle(v).display !== "none" : false;
     },
     updateColliders: null,
+    snakeDoor: null,
+    platformerDoor: null,
+    snakeConfig: null,
+    platformerSpawnPos: null,
+    tankSpawnPos: null,
 };

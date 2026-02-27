@@ -200,6 +200,7 @@ body {
   width: calc(100% + 2px);
   border-top: 1px solid var(--black);
   background: var(--tan);
+  white-space: normal;
 }
 
 .nav-custom-select .select-options li {
@@ -337,35 +338,178 @@ body {
   left: 0;
 }
 
-/* ── GoL & Overlay controls strip ──────────────────────────── */
-#gol-controls,
-#overlay-controls {
+/* ── Inline controls row ──────────────────────────────────── */
+.inline-controls-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px 24px;
-  background: var(--tan);
   gap: 12px;
+  padding: 6px 0;
+  flex-wrap: wrap;
 }
 
-#gol-controls {
-  border-top: var(--border);
-  padding-bottom: 0px;
-}
-
-#overlay-controls {
-  padding-top: 5px;
-  justify-content: space-between;
-  position: relative;
-  z-index: 1000;
-}
-
-#gol-controls > span,
-#overlay-controls > span {
-  font-size: 0.78rem;
+/* ── Hint bar (about-website top) ────────────────────────── */
+.hint-bar {
+  padding: 8px 24px;
+  font-size: 0.76rem;
   letter-spacing: 0.06em;
-  opacity: 0.7;
-  flex: 1;
+  opacity: 0.65;
+  border-bottom: var(--border);
+  text-align: center;
+}
+
+.hint-bar kbd {
+  font-family: inherit;
+  border: 1px solid var(--black);
+  padding: 0 4px;
+  font-size: 0.72rem;
+}
+
+/* ── Inline link button (looks like text link) ───────────── */
+.inline-link-btn {
+  background: none;
+  color: var(--black);
+  border: none;
+  text-decoration: underline;
+  font-size: inherit;
+  padding: 0;
+  letter-spacing: inherit;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.inline-link-btn:hover,
+.inline-link-btn.hover-active {
+  background: var(--black);
+  color: var(--tan);
+}
+
+/* ── Inline timestep select ──────────────────────────────── */
+.inline-select {
+  position: relative;
+  display: inline-block;
+}
+
+.inline-select-toggle {
+  background: none;
+  color: var(--black);
+  border: 1px dashed var(--black);
+  font-size: inherit;
+  font-family: inherit;
+  padding: 1px 6px;
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: inherit;
+  font-weight: bold;
+}
+
+.inline-select-toggle:hover {
+  background: var(--black);
+  color: var(--tan);
+}
+
+.inline-select-options {
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 0;
+  min-width: 80px;
+  background: var(--black);
+  border: var(--border);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  z-index: 200;
+  white-space: nowrap;
+}
+
+.inline-select-options li {
+  padding: 4px 10px;
+  cursor: pointer;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.82rem;
+  color: var(--tan);
+}
+
+.inline-select-options li:hover,
+.inline-select-options li.selected {
+  background: var(--tan);
+  color: var(--black);
+}
+
+/* ── Progressive reveal sections ─────────────────────────── */
+.reveal-section {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.6s ease, opacity 0.5s ease;
+}
+
+.reveal-section.reveal-visible {
+  max-height: 2000px;
+  opacity: 1;
+}
+
+/* ── No-collide & door links inside ASCII art ────────────── */
+.spawn-marker {
+  color: transparent;
+}
+
+.door-link {
+  color: var(--comp-color);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.door-link:hover,
+.door-link.hover-active {
+  background: var(--black);
+  color: var(--tan);
+}
+
+/* ── ASCII terrain (platformer obstacle) ─────────────────── */
+.ascii-terrain {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 14px;
+  line-height: 1.2;
+  white-space: pre;
+  color: var(--black);
+  margin: 12px 0;
+  overflow-x: auto;
+}
+
+/* ── Snake door: opened state looks like a clickable link ─── */
+.stage-door-open {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ── Links inside ascii-terrain pre blocks ───────────────── */
+.ascii-terrain a {
+  color: var(--black);
+  text-decoration: underline;
+}
+
+.ascii-terrain a:hover,
+.ascii-terrain a.hover-active {
+  background: var(--black);
+  color: var(--tan);
+}
+
+/* ── Mode buttons row ────────────────────────────────────── */
+.mode-buttons-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.mode-buttons-row button {
+  min-width: 100px;
+}
+
+/* ── Inline rule select (reuses custom-select pattern) ───── */
+.inline-rule-select .select-options {
+  bottom: calc(100% + 4px);
+  top: auto;
 }
 
 /* ── Buttons ─────────────────────────────────────────────── */

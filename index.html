@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Personal website — a little corner of the old web." />
     <title>bit of fun</title>
-    <link rel="icon" href="/sock rat cheese.jpg" type="image/jpeg" />
+    <link rel="icon" href="/sock-rat-cheese.jpg" type="image/jpeg" />
 </head>
 
 <body>
@@ -46,6 +46,7 @@
                         <li role="option" data-view="view-puzzles" class="nav-link">Puzzles</li>
                         <li role="option" data-view="view-webgames" class="nav-link">Webgames</li>
                         <li role="option" data-view="view-tools" class="nav-link">Tools</li>
+                        <li role="option" data-view="view-char-select" class="nav-link">Character select</li>
                     </ul>
                 </div>
             </nav>
@@ -56,35 +57,52 @@
             <div id="view-about-me" class="page-view">
                 <section class="section" id="about">
                     <h2>About Me</h2>
+                    <p>Welcome to my website!</p>
                     <p>
-                        Hello! This is a placeholder paragraph.
+                        I'm a 3rd year Maths student at Edinburgh University, but I spend most of
+                        my time creating cool software or electronics projects, and getting involved
+                        with organising society events. That or writing puzzles.
                     </p>
                     <p>
-                        This is another placeholder paragraph.
-                    </p>
-                    <p>
-                        This is another placeholder paragraph.
-                    </p>
-                    <p>
-                        This is another placeholder paragraph.
-                    </p>
-                    <p>
-                        This is another placeholder paragraph.
-                    </p>
-                    <p>
-                        This is another placeholder paragraph.
+                        There are plenty of hidden features on this website, so please do have a look around!
                     </p>
                 </section>
 
-                <section class="section" id="links">
-                    <h2>Links</h2>
-                    <ul>
-                        <li><a href="https://github.com/OmicronTheta2338" target="_blank" rel="noopener">GitHub</a> — my
-                            code</li>
-                        <li><a href="https://krussell.uk" target="_blank" rel="noopener">krussell.uk</a> -
-                            word-association-game</li>
-                        <li><a href="#puzzles">Puzzles</a> - try out some puzzle games!</li>
-                    </ul>
+                <section class="section" id="sec-background">
+                    <h2>What's going on in the background?</h2>
+                    <p>
+                        The background is currently running a simulation of Conway's Game of Life!
+                        The screen is split into cells, and updated every
+                        <span class="timestep-dropdown" data-target="aboutme"></span>
+                        based on simple rules.
+                    </p>
+                    <p>Here's a button to regenerate the background:</p>
+                    <div class="inline-controls-row">
+                        <button type="button" data-action="randomise">&#x27F3; Randomise</button>
+                    </div>
+                    <p>And here's what it looks like if you change those rules slightly:</p>
+                    <div class="inline-controls-row">
+                        <div class="custom-select inline-rule-select">
+                            <button type="button" class="select-toggle" data-action="rule-toggle" aria-haspopup="listbox"
+                                aria-expanded="false">
+                                <span class="rule-label-text">Game of Life</span> &#x25BE;
+                            </button>
+                            <ul class="select-options rule-options-list" role="listbox" hidden>
+                                <li role="option" data-value="gameoflife" class="selected">Game of Life</li>
+                                <li role="option" data-value="starwars">Star Wars</li>
+                                <li role="option" data-value="brians">Brian's Brain</li>
+                                <li role="option" data-value="brain6">Brain 6</li>
+                                <li role="option" data-value="rake">Rake</li>
+                                <li role="option" data-value="bombers">Bombers</li>
+                                <li role="option" data-value="sedimental">SediMental</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <p style="margin-top: 1em;">
+                        There's plenty more happening on this site than it seems, so do check out the
+                        <a href="#about-site" class="nav-link" data-view="view-about-site">ABOUT-WEBSITE</a>
+                        page to see more...
+                    </p>
                 </section>
             </div><!-- /#view-about-me -->
 
@@ -125,31 +143,115 @@
            ABOUT THIS SITE
            ═══════════════════════════════════════════ -->
             <div id="view-about-site" class="page-view" style="display: none;">
-                <section class="section" id="sec-about-site">
-                    <h2>About This Site</h2>
+
+                <div class="hint-bar">
+                    click and drag the background to turn cells alive &nbsp;·&nbsp; tap <kbd>esc</kbd> to hide panel
+                </div>
+
+                <section class="section" id="sec-ca-explainer">
+                    <h2>What is this Conway's Game of Life guff all about?</h2>
+                    <p>It's an example of a cellular automaton.</p>
                     <p>
-                        Colour changer:
+                        Cellular automata are simple rules-based simulations in which cells can be alive
+                        or dead, and on each
+                        <span class="timestep-dropdown" data-target="aboutsite"></span>
+                        'tick' of the simulation a cell decides whether it stays alive, dead, or switches
+                        between states based on what its neighbours are doing.
                     </p>
+                    <p>
+                        If you want to read more about how they work, click
+                        <a href="https://en.wikipedia.org/wiki/Cellular_automaton" target="_blank" rel="noopener">here</a>.
+                    </p>
+                </section>
+
+                <section class="section" id="sec-site-controls">
+                    <div class="inline-controls-row">
+                        <button type="button" data-action="randomise">&#x27F3; Randomise</button>
+                        <div class="custom-select inline-rule-select">
+                            <button type="button" class="select-toggle" data-action="rule-toggle" aria-haspopup="listbox"
+                                aria-expanded="false">
+                                <span class="rule-label-text">Game of Life</span> &#x25BE;
+                            </button>
+                            <ul class="select-options rule-options-list" role="listbox" hidden>
+                                <li role="option" data-value="gameoflife" class="selected">Game of Life</li>
+                                <li role="option" data-value="starwars">Star Wars</li>
+                                <li role="option" data-value="brians">Brian's Brain</li>
+                                <li role="option" data-value="brain6">Brain 6</li>
+                                <li role="option" data-value="rake">Rake</li>
+                                <li role="option" data-value="bombers">Bombers</li>
+                                <li role="option" data-value="sedimental">SediMental</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="section" id="sec-colour-slider">
+                    <p>Colour changer:</p>
                     <div id="color-slider-container">
                         <div id="color-slider-bar"></div>
                         <div id="color-slider-marker" style="left: 0%;"></div>
                     </div>
-                    <p style="margin-top: 2em;">
-                        Resource usage:
+                </section>
+
+
+                <section class="section" id="sec-tour-intro">
+                    <h2>Oh but this is only just the beginning...</h2>
+                    <p>
+                        For starters,
+                        <button type="button" class="inline-link-btn" data-action="start-minesweeper">this button</button>
+                        pauses the simulation and starts a game of minesweeper based on where the
+                        alive cells were.
                     </p>
-                    <div style="display: flex; align-items: stretch;">
-                        <div id="perf-container" style="flex: 0 0 14px;">
-                            <div id="perf-bar"></div>
-                            <div id="perf-marker"></div>
-                        </div>
-                        <div id="perf-scale"
-                            style="position: relative; margin-left: 12px; font-size: 0.75rem; color: var(--black); display: flex; flex-direction: column; justify-content: space-between; height: 100px; margin-top: 8px;">
-                            <div style="line-height: 14px;">200MB</div>
-                            <div style="line-height: 14px;">100MB</div>
-                            <div style="line-height: 14px;">0MB</div>
-                        </div>
+                    <p>
+                        ... or
+                        <button type="button" class="inline-link-btn" data-action="start-snake">this other button</button>
+                        starts a snake game you can control!
+                    </p>
+                </section>
+
+                <div id="reveal-gauntlet" class="reveal-section">
+                    <section class="section">
+<pre class="ascii-terrain" id="stage-ascii">=====================================================================
+||                                                                 ||
+||                                                        <span id="stage-spawn" class="no-collide" style="color:transparent">[X]</span>      ||
+||                                                                 ||
+||    PRESS W/A/S/D TO TURN                                        ||
+||                      |                                          ||
+||                      |                                          ||
+||                      |                                          ||
+||        HOLD TO MOVE FASTER                                      ||
+||                      |                                          ||
+||                      |                                          ||
+||                      |                                          ||
+||              JUST DON'T BUMP INTO ANY TEXT                      ||
+||                      |                                          ||
+||                      |                                          ||
+||                      |                                          ||
+||                    EAT 3 APPLES TO UNLOCK THE DOOR              ||
+||                                                                 ||
+||      <span id="sd-top">######</span>                                                     ||
+||      <span id="sd-mid">#<span id="stage-door" class="no-collide">DOOR</span>#</span>                                                     ||
+||      <span id="sd-bot">######</span>                                                     ||
+||                                                                 ||
+=====================================================================</pre>
+                    </section>
+                </div>
+
+                <section class="section" id="sec-mode-buttons" style="display: none;">
+                    <div class="mode-buttons-row">
+                        <button type="button" data-action="set-overlay" data-mode="snake">Snake</button>
+                        <button type="button" data-action="set-overlay" data-mode="platformer">Platformer</button>
+                        <button type="button" data-action="set-overlay" data-mode="tank">Tank</button>
                     </div>
                 </section>
+
+                <section class="section" id="sec-outro" style="display: none;">
+                    <p>
+                        Pretty much every other fun feature is under the
+                        <strong>MORE</strong> tab, so I'll see you over there!
+                    </p>
+                </section>
+
             </div><!-- /#view-about-site -->
 
             <!-- ═══════════════════════════════════════════
@@ -233,51 +335,19 @@
             </div><!-- /#view-tools -->
 
             <!-- ═══════════════════════════════════════════
-           GOL CONTROLS
+           CHARACTER SELECT
            ═══════════════════════════════════════════ -->
-            <div id="gol-controls">
-                <span style="font-size:0.76rem;opacity:0.65;">
-                    drag on the background to paint cells alive
-                </span>
-                <div id="rule-dropdown" class="custom-select">
-                    <button type="button" id="rule-toggle" class="select-toggle" aria-haspopup="listbox"
-                        aria-expanded="false">
-                        <span id="rule-label">Game of Life</span> ▾
-                    </button>
-                    <ul id="rule-options" class="select-options" role="listbox" hidden>
-                        <li role="option" data-value="gameoflife" class="selected">Game of Life</li>
-                        <li role="option" data-value="starwars">Star Wars</li>
-                        <li role="option" data-value="brians">Brian's Brain</li>
-                        <li role="option" data-value="brain6">Brain 6</li>
-                        <li role="option" data-value="rake">Rake</li>
-                        <li role="option" data-value="bombers">Bombers</li>
-                        <li role="option" data-value="sedimental">SediMental</li>
-                        <li role="option" data-value="minesweeper">Minesweeper</li>
-                    </ul>
-                </div>
-                <button id="randomise-btn" type="button">⟳ Randomise</button>
-            </div>
-
-            <!-- ═══════════════════════════════════════════
-           OVERLAY CONTROLS
-           ═══════════════════════════════════════════ -->
-            <div id="overlay-controls">
-                <span id="overlay-hint" style="font-size:0.76rem;opacity:0.65;">
-                    none active
-                </span>
-                <div id="overlay-dropdown" class="custom-select">
-                    <button type="button" id="overlay-toggle" class="select-toggle" aria-haspopup="listbox"
-                        aria-expanded="false">
-                        <span id="overlay-label">No Overlay</span> ▾
-                    </button>
-                    <ul id="overlay-options" class="select-options" role="listbox" hidden>
-                        <li role="option" data-value="none" class="selected">No Overlay</li>
-                        <li role="option" data-value="platformer">Platformer Controls</li>
-                        <li role="option" data-value="snake">Snake Controls</li>
-                        <li role="option" data-value="tank">Tank Controls</li>
-                    </ul>
-                </div>
-            </div>
+            <div id="view-char-select" class="page-view" style="display: none;">
+                <section class="section">
+                    <h2>Character Select</h2>
+                    <p>Pick a character to play as.</p>
+                    <div class="mode-buttons-row">
+                        <button type="button" data-action="set-overlay" data-mode="snake">Snake</button>
+                        <button type="button" data-action="set-overlay" data-mode="platformer">Platformer</button>
+                        <button type="button" data-action="set-overlay" data-mode="tank">Tank</button>
+                    </div>
+                </section>
+            </div><!-- /#view-char-select -->
 
             <!-- ═══════════════════════════════════════════
            FOOTER

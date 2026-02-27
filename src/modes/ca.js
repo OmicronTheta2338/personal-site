@@ -10,6 +10,10 @@ const LIVE_CHANCE = 0.30;
 
 let current, next, permanentlyDead, COLS, ROWS;
 let initialised = false;
+let caStepMs = 100;
+
+export function setCAStepMs(ms) { caStepMs = ms; }
+export function getCAStepMs() { return caStepMs; }
 
 function idx(c, r) { return r * COLS + c; }
 
@@ -59,7 +63,7 @@ function makeCAMode(id, label, survive, born, gens) {
     return {
         id,
         label,
-        stepMs: 100,
+        get stepMs() { return caStepMs; },
         CELL: 12,
 
         rebuildColors() {
@@ -252,6 +256,25 @@ function makeCAMode(id, label, survive, born, gens) {
             return { current, COLS, ROWS };
         }
     };
+}
+
+// ── Per-cell helpers used by other modes ──────────────────────────────────
+// Canvas grid (c, r) tiles vertically over the CA grid via r % ROWS.
+
+export function isCellAlive(c, r) {
+    if (!initialised) return false;
+    const ci = ((c % COLS) + COLS) % COLS;
+    const ri = ((r % ROWS) + ROWS) % ROWS;
+    return current[idx(ci, ri)] > 0;
+}
+
+export function killCellAt(c, r) {
+    if (!initialised) return;
+    const ci = ((c % COLS) + COLS) % COLS;
+    const ri = ((r % ROWS) + ROWS) % ROWS;
+    current[idx(ci, ri)] = 0;
+    // Invalidate all CA mode solid caches so the dead cell isn't re-used
+    caModes.forEach(m => { m.cachedSolidsFrame = -1; });
 }
 
 export const caModes = [

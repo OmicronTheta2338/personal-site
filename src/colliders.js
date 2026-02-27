@@ -21,27 +21,34 @@ export function buildCharacterColliders(shared) {
         shared.columnRect = null;
     }
 
-    var elems = document.querySelectorAll('#site-header h1, #site-header p, #site-nav a, #nav-more-label, #nav-more-options li, .section h2, .section p, .section li, #contact p, #gol-controls, #overlay-controls, #site-footer, #randomise-btn, #wg-generate-btn, #wg-sidebar h3, #wg-gamemode-list a, #wg-instructions h3, #wg-instructions p, .wg-word-row, .wg-history-item, .wg-hint');
+    var elems = document.querySelectorAll('#site-header h1, #site-header p, #site-nav a, #nav-more-label, #nav-more-options li, .section h2, .section p, .section li, #contact p, .inline-controls-row, .hint-bar, .ascii-terrain, .mode-buttons-row, #site-footer, [data-action="randomise"], #wg-generate-btn, #wg-sidebar h3, #wg-gamemode-list a, #wg-instructions h3, #wg-instructions p, .wg-word-row, .wg-history-item, .wg-hint');
 
-    var ruleOpts = document.getElementById("rule-options");
-    var overlayOpts = document.getElementById("overlay-options");
+    var ruleOptsAll = document.querySelectorAll(".rule-options-list");
     var navOpts = document.getElementById("nav-more-options");
-    var isRuleOptsHidden = ruleOpts ? ruleOpts.hidden : true;
-    var isOverlayOptsHidden = overlayOpts ? overlayOpts.hidden : true;
     var isNavOptsHidden = navOpts ? navOpts.hidden : true;
+
+    var ruleOptsVisible = [];
+    ruleOptsAll.forEach(function (ro) {
+        if (!ro.hidden) ruleOptsVisible.push(ro);
+    });
 
     var textNodesSet = new Set();
     for (var i = 0; i < elems.length; i++) {
         var el = elems[i];
         if (el.getBoundingClientRect().height === 0) continue;
+        if (el.closest('.reveal-section:not(.reveal-visible)')) continue;
 
         var walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
         var node;
         while (node = walk.nextNode()) {
             var parent = node.parentElement;
-            if (isRuleOptsHidden && ruleOpts && ruleOpts.contains(parent)) continue;
-            if (isOverlayOptsHidden && overlayOpts && overlayOpts.contains(parent)) continue;
+            var skipRuleOpt = false;
+            ruleOptsAll.forEach(function (ro) {
+                if (ro.hidden && ro.contains(parent)) skipRuleOpt = true;
+            });
+            if (skipRuleOpt) continue;
             if (isNavOptsHidden && navOpts && navOpts.contains(parent)) continue;
+            if (parent.closest('.no-collide')) continue;
             if (node.nodeValue.trim().length > 0) {
                 textNodesSet.add(node);
             }
@@ -50,24 +57,15 @@ export function buildCharacterColliders(shared) {
     var textNodes = Array.from(textNodesSet);
 
     var blockingRects = [];
-    if (!isRuleOptsHidden && ruleOpts) {
-        var rect = ruleOpts.getBoundingClientRect();
+    ruleOptsVisible.forEach(function (ro) {
+        var rect = ro.getBoundingClientRect();
         blockingRects.push({
             left: rect.left + window.scrollX,
             right: rect.right + window.scrollX,
             top: rect.top + window.scrollY,
             bottom: rect.bottom + window.scrollY
         });
-    }
-    if (!isOverlayOptsHidden && overlayOpts) {
-        var rect = overlayOpts.getBoundingClientRect();
-        blockingRects.push({
-            left: rect.left + window.scrollX,
-            right: rect.right + window.scrollX,
-            top: rect.top + window.scrollY,
-            bottom: rect.bottom + window.scrollY
-        });
-    }
+    });
     if (!isNavOptsHidden && navOpts) {
         var rect = navOpts.getBoundingClientRect();
         blockingRects.push({
@@ -106,9 +104,13 @@ export function buildCharacterColliders(shared) {
             if (r.width > 0 && r.height > 0) {
                 if (isObscured(r)) {
                     var parent = tn.parentElement;
-                    var isInsideDropdown = (!isRuleOptsHidden && ruleOpts && ruleOpts.contains(parent)) ||
-                        (!isOverlayOptsHidden && overlayOpts && overlayOpts.contains(parent)) ||
-                        (!isNavOptsHidden && navOpts && navOpts.contains(parent));
+                    var isInsideDropdown = false;
+                    ruleOptsVisible.forEach(function (ro) {
+                        if (ro.contains(parent)) isInsideDropdown = true;
+                    });
+                    if (!isInsideDropdown && !isNavOptsHidden && navOpts && navOpts.contains(parent)) {
+                        isInsideDropdown = true;
+                    }
 
                     if (!isInsideDropdown) {
                         continue;
@@ -209,43 +211,22 @@ export function buildCharacterColliders(shared) {
         }
     }
 
-    var perfMarker = document.getElementById("perf-marker");
-    if (perfMarker && isAboutSiteActive) {
-        var pr = perfMarker.getBoundingClientRect();
-        if (pr.width > 0 && pr.height > 0) {
-            var isPerfObscured = false;
-            for (var j = 0; j < blockingRects.length; j++) {
-                var b = blockingRects[j];
-                if (pr.left + window.scrollX < b.right && pr.right + window.scrollX > b.left &&
-                    pr.top + window.scrollY < b.bottom && pr.bottom + window.scrollY > b.top) {
-                    isPerfObscured = true;
-                    break;
-                }
-            }
-            if (!isPerfObscured) {
-                shared.textColliders.push({
-                    left: pr.left + window.scrollX,
-                    right: pr.right + window.scrollX,
-                    top: pr.top + window.scrollY,
-                    bottom: pr.bottom + window.scrollY,
-                    isPerfMarker: true
-                });
-            }
-        }
-    }
-
     shared.linkElements = [];
-    var links = document.querySelectorAll('#column a, #site-nav a, #rule-toggle, #overlay-toggle, #nav-more-toggle, #rule-options li, #overlay-options li, #nav-more-options li, #randomise-btn, #wg-generate-btn');
+    var links = document.querySelectorAll('#column a, #site-nav a, [data-action="rule-toggle"], #nav-more-toggle, .rule-options-list li, #nav-more-options li, [data-action="randomise"], [data-action="set-overlay"], .inline-link-btn, #wg-generate-btn');
     for (var i = 0; i < links.length; i++) {
         var el = links[i];
-        if (el.tagName.toLowerCase() === 'li' && el.parentElement.id === 'rule-options' && isRuleOptsHidden) continue;
-        if (el.tagName.toLowerCase() === 'li' && el.parentElement.id === 'overlay-options' && isOverlayOptsHidden) continue;
+        if (el.closest('.reveal-section:not(.reveal-visible)')) continue;
+        if (el.tagName.toLowerCase() === 'li' && el.closest('.rule-options-list') && el.closest('.rule-options-list').hidden) continue;
         if (el.tagName.toLowerCase() === 'li' && el.parentElement.id === 'nav-more-options' && isNavOptsHidden) continue;
         var r = el.getBoundingClientRect();
         if (r.width > 0 && r.height > 0) {
-            var isInsideDropdown = (!isRuleOptsHidden && ruleOpts && ruleOpts.contains(el)) ||
-                (!isOverlayOptsHidden && overlayOpts && overlayOpts.contains(el)) ||
-                (!isNavOptsHidden && navOpts && navOpts.contains(el));
+            var isInsideDropdown = false;
+            ruleOptsVisible.forEach(function (ro) {
+                if (ro.contains(el)) isInsideDropdown = true;
+            });
+            if (!isInsideDropdown && !isNavOptsHidden && navOpts && navOpts.contains(el)) {
+                isInsideDropdown = true;
+            }
 
             if (isObscured(r) && !isInsideDropdown) {
                 continue;
