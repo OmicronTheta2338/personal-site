@@ -83,8 +83,8 @@
                     <p>And here's what it looks like if you change those rules slightly:</p>
                     <div class="inline-controls-row">
                         <div class="custom-select inline-rule-select">
-                            <button type="button" class="select-toggle" data-action="rule-toggle" aria-haspopup="listbox"
-                                aria-expanded="false">
+                            <button type="button" class="select-toggle" data-action="rule-toggle"
+                                aria-haspopup="listbox" aria-expanded="false">
                                 <span class="rule-label-text">Game of Life</span> &#x25BE;
                             </button>
                             <ul class="select-options rule-options-list" role="listbox" hidden>
@@ -160,7 +160,8 @@
                     </p>
                     <p>
                         If you want to read more about how they work, click
-                        <a href="https://en.wikipedia.org/wiki/Cellular_automaton" target="_blank" rel="noopener">here</a>.
+                        <a href="https://en.wikipedia.org/wiki/Cellular_automaton" target="_blank"
+                            rel="noopener">here</a>.
                     </p>
                 </section>
 
@@ -168,8 +169,8 @@
                     <div class="inline-controls-row">
                         <button type="button" data-action="randomise">&#x27F3; Randomise</button>
                         <div class="custom-select inline-rule-select">
-                            <button type="button" class="select-toggle" data-action="rule-toggle" aria-haspopup="listbox"
-                                aria-expanded="false">
+                            <button type="button" class="select-toggle" data-action="rule-toggle"
+                                aria-haspopup="listbox" aria-expanded="false">
                                 <span class="rule-label-text">Game of Life</span> &#x25BE;
                             </button>
                             <ul class="select-options rule-options-list" role="listbox" hidden>
@@ -198,20 +199,22 @@
                     <h2>Oh but this is only just the beginning...</h2>
                     <p>
                         For starters,
-                        <button type="button" class="inline-link-btn" data-action="start-minesweeper">this button</button>
+                        <button type="button" class="inline-link-btn" data-action="start-minesweeper">this
+                            button</button>
                         pauses the simulation and starts a game of minesweeper based on where the
                         alive cells were.
                     </p>
                     <p>
                         ... or
-                        <button type="button" class="inline-link-btn" data-action="start-snake">this other button</button>
+                        <button type="button" class="inline-link-btn" data-action="start-snake">this other
+                            button</button>
                         starts a snake game you can control!
                     </p>
                 </section>
 
                 <div id="reveal-gauntlet" class="reveal-section">
                     <section class="section">
-<pre class="ascii-terrain" id="stage-ascii">=====================================================================
+                        <pre class="ascii-terrain" id="stage-ascii">=====================================================================
 ||                                                                 ||
 ||                                                        <span id="stage-spawn" class="no-collide" style="color:transparent">[X]</span>      ||
 ||                                                                 ||
@@ -260,11 +263,79 @@
             <div id="view-puzzles" class="page-view" style="display: none;">
                 <section class="section" id="puzzles">
                     <h2>Puzzles</h2>
-                    <p>
-                        Coming soon!
-                    </p>
+                    <p>Select a category:</p>
+                    <ul>
+                        <li><a href="#puzzle-hunts" class="nav-link" data-view="view-puzzle-hunts">Puzzle Hunts</a></li>
+                        <li><a href="#puz-quibs" class="nav-link" data-view="view-puz-quibs">Puz Quibs</a></li>
+                    </ul>
                 </section>
             </div><!-- /#view-puzzles -->
+
+            <!-- ═══════════════════════════════════════════
+           PUZZLE HUNTS
+           ═══════════════════════════════════════════ -->
+            <div id="view-puzzle-hunts" class="page-view" style="display: none;">
+                <section class="section">
+                    <h2>Puzzle Hunts</h2>
+                    <p>
+                        <a href="#puzzles" class="nav-link" data-view="view-puzzles">« Back to Puzzles</a>
+                    </p>
+                    <div class="puzzle-item" style="margin-top: 15px;">
+                        <h3>Example Hunt 1</h3>
+                        <p>Download the PDFs below:</p>
+                        <ul>
+                            <li><a href="#">Puzzle PDF (Coming Soon)</a></li>
+                            <li><a href="#">Solution PDF (Coming Soon)</a></li>
+                        </ul>
+                        <div class="answer-checker"
+                            style="margin-top: 10px; padding: 10px; border: 1px dashed var(--black);">
+                            <h4>Verify Answer</h4>
+                            <form class="verify-form"
+                                data-hash="94ee059335e587e501cc4bf90613e0814f00a7b08bc7c648fd865a2af6a22cc2">
+                                <!-- "TEST" -->
+                                <input type="text" class="answer-input" placeholder="Enter answer..."
+                                    style="padding: 4px; font-family: inherit; border: 1px solid var(--black); background: var(--tan); color: var(--black);"
+                                    required />
+                                <button type="submit">Check</button>
+                                <span class="verify-result" style="margin-left: 10px; font-weight: bold;"></span>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+            </div><!-- /#view-puzzle-hunts -->
+
+            <!-- ═══════════════════════════════════════════
+           PUZ QUIBS
+           ═══════════════════════════════════════════ -->
+            <div id="view-puz-quibs" class="page-view" style="display: none;">
+                <section class="section">
+                    <h2>Puz Quibs</h2>
+                    <p>
+                        <a href="#puzzles" class="nav-link" data-view="view-puzzles">« Back to Puzzles</a>
+                    </p>
+                    <div class="puzzle-item" style="margin-top: 15px;">
+                        <h3>Example Quib 1</h3>
+                        <p>Download the PDFs below:</p>
+                        <ul>
+                            <li><a href="#">Puzzle PDF (Coming Soon)</a></li>
+                            <li><a href="#">Solution PDF (Coming Soon)</a></li>
+                        </ul>
+                        <div class="answer-checker"
+                            style="margin-top: 10px; padding: 10px; border: 1px dashed var(--black);">
+                            <h4>Verify Answer</h4>
+                            <form class="verify-form"
+                                data-hash="94ee059335e587e501cc4bf90613e0814f00a7b08bc7c648fd865a2af6a22cc2">
+                                <!-- "TEST" -->
+                                <input type="text" class="answer-input" placeholder="Enter answer..."
+                                    style="padding: 4px; font-family: inherit; border: 1px solid var(--black); background: var(--tan); color: var(--black);"
+                                    required />
+                                <button type="submit">Check</button>
+                                <span class="verify-result" style="margin-left: 10px; font-weight: bold;"></span>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+            </div><!-- /#view-puz-quibs -->
 
             <!-- ═══════════════════════════════════════════
            WEBGAMES

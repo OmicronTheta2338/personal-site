@@ -11,6 +11,7 @@ import { initWordGame } from './word-game/word-game.js';
 import { initEngine } from './engine.js';
 import { initTimestepDropdowns } from './timestep-dropdown.js';
 import { initTour } from './tour.js';
+import { initPuzzles } from './puzzles.js';
 
 document.getElementById("yr").textContent = new Date().getFullYear();
 
@@ -20,3 +21,4 @@ initWordGame();
 initEngine();
 initTimestepDropdowns();
 initTour();
+initPuzzles();
