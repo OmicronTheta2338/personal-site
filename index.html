@@ -280,29 +280,118 @@
                     <p>
                         <a href="#puzzles" class="nav-link" data-view="view-puzzles">« Back to Puzzles</a>
                     </p>
-                    <div class="puzzle-item" style="margin-top: 15px;">
-                        <h3>Example Hunt 1</h3>
-                        <p>Download the PDFs below:</p>
+                    <p style="margin-top: 15px;">Available hunts:</p>
+                    <ul>
+                        <li><a href="#hunt-example1" class="nav-link" data-view="view-hunt-example1">Hunt 1: The Example
+                                Hunt</a></li>
+                    </ul>
+                </section>
+            </div><!-- /#view-puzzle-hunts -->
+
+            <div id="view-hunt-example1" class="page-view" style="display: none;">
+                <section class="section" data-hunt-id="example1">
+                    <h2>Hunt 1: The Example Hunt</h2>
+                    <p>
+                        <a href="#puzzle-hunts" class="nav-link" data-view="view-puzzle-hunts">« Back to Puzzle
+                            Hunts</a>
+                    </p>
+                    <p style="margin-top: 15px; font-style: italic;">
+                        Welcome to the first example hunt! You can download the PDF for each puzzle below and verify
+                        your answers.
+                    </p>
+
+                    <div class="puzzle-item" style="margin-top: 20px;">
+                        <h3>Puzzle 1: Introduction</h3>
                         <ul>
-                            <li><a href="#">Puzzle PDF (Coming Soon)</a></li>
-                            <li><a href="#">Solution PDF (Coming Soon)</a></li>
+                            <li><a href="/puzzles/example1/puzzle1.pdf" target="_blank">Puzzle PDF (Coming Soon)</a>
+                            </li>
+                            <li><a href="/puzzles/example1/solution1.pdf" target="_blank">Solution PDF (Coming Soon)</a>
+                            </li>
                         </ul>
                         <div class="answer-checker"
                             style="margin-top: 10px; padding: 10px; border: 1px dashed var(--black);">
-                            <h4>Verify Answer</h4>
                             <form class="verify-form"
-                                data-hash="94ee059335e587e501cc4bf90613e0814f00a7b08bc7c648fd865a2af6a22cc2">
-                                <!-- "TEST" -->
+                                data-hash="94ee059335e587e501cc4bf90613e0814f00a7b08bc7c648fd865a2af6a22cc2"
+                                data-puzzle-name="Puzzle 1: Introduction">
+                                <label style="display: block; font-weight: bold; margin-bottom: 5px;">Verify
+                                    Answer:</label>
                                 <input type="text" class="answer-input" placeholder="Enter answer..."
                                     style="padding: 4px; font-family: inherit; border: 1px solid var(--black); background: var(--tan); color: var(--black);"
                                     required />
                                 <button type="submit">Check</button>
                                 <span class="verify-result" style="margin-left: 10px; font-weight: bold;"></span>
                             </form>
+                            <div class="solved-display"
+                                style="display: none; font-weight: bold; color: var(--comp-dark-color);">
+                                <!-- Replaces the form when solved -->
+                            </div>
                         </div>
                     </div>
+
+                    <div class="puzzle-item" style="margin-top: 20px;">
+                        <h3>Puzzle 2: The Next Step</h3>
+                        <ul>
+                            <li><a href="/puzzles/example1/puzzle2.pdf" target="_blank">Puzzle PDF (Coming Soon)</a>
+                            </li>
+                            <li><a href="/puzzles/example1/solution2.pdf" target="_blank">Solution PDF (Coming Soon)</a>
+                            </li>
+                        </ul>
+                        <div class="answer-checker"
+                            style="margin-top: 10px; padding: 10px; border: 1px dashed var(--black);">
+                            <!-- Hash for "APPLE" is f5903f51e341a783e69ffc2d9b335048716f5f040a782a2764cd4e728b0f74d9 -->
+                            <form class="verify-form"
+                                data-hash="f5903f51e341a783e69ffc2d9b335048716f5f040a782a2764cd4e728b0f74d9"
+                                data-puzzle-name="Puzzle 2: The Next Step">
+                                <label style="display: block; font-weight: bold; margin-bottom: 5px;">Verify
+                                    Answer:</label>
+                                <input type="text" class="answer-input" placeholder="Enter answer..."
+                                    style="padding: 4px; font-family: inherit; border: 1px solid var(--black); background: var(--tan); color: var(--black);"
+                                    required />
+                                <button type="submit">Check</button>
+                                <span class="verify-result" style="margin-left: 10px; font-weight: bold;"></span>
+                            </form>
+                            <div class="solved-display"
+                                style="display: none; font-weight: bold; color: var(--comp-dark-color);"></div>
+                        </div>
+                    </div>
+
+                    <div class="puzzle-item" style="margin-top: 20px;">
+                        <h3>Metapuzzle: The End</h3>
+                        <ul>
+                            <li><a href="/puzzles/example1/meta.pdf" target="_blank">Puzzle PDF (Coming Soon)</a></li>
+                            <li><a href="/puzzles/example1/solution_meta.pdf" target="_blank">Solution PDF (Coming
+                                    Soon)</a></li>
+                        </ul>
+                        <div class="answer-checker"
+                            style="margin-top: 10px; padding: 10px; border: 1px dashed var(--black);">
+                            <!-- Hash for "BANANA" is b493d48364afe44d11c0165cf470a4164d1e2609911ef998be868d46ade3de4e -->
+                            <form class="verify-form"
+                                data-hash="b493d48364afe44d11c0165cf470a4164d1e2609911ef998be868d46ade3de4e"
+                                data-puzzle-name="Metapuzzle: The End">
+                                <label style="display: block; font-weight: bold; margin-bottom: 5px;">Verify
+                                    Answer:</label>
+                                <input type="text" class="answer-input" placeholder="Enter answer..."
+                                    style="padding: 4px; font-family: inherit; border: 1px solid var(--black); background: var(--tan); color: var(--black);"
+                                    required />
+                                <button type="submit">Check</button>
+                                <span class="verify-result" style="margin-left: 10px; font-weight: bold;"></span>
+                            </form>
+                            <div class="solved-display"
+                                style="display: none; font-weight: bold; color: var(--comp-dark-color);"></div>
+                        </div>
+                    </div>
+
+                    <hr style="margin-top: 30px;" />
+                    <div class="solved-puzzles-container" style="margin-top: 20px;">
+                        <h3>Hunt Log</h3>
+                        <p style="font-size: 0.9em; opacity: 0.8; margin-bottom: 10px;">Solved puzzles for this hunt
+                            will be recorded here.</p>
+                        <ul class="solved-puzzles-list" style="list-style-type: none;">
+                            <!-- Solved items injected here -->
+                        </ul>
+                    </div>
                 </section>
-            </div><!-- /#view-puzzle-hunts -->
+            </div><!-- /#view-hunt-example1 -->
 
             <!-- ═══════════════════════════════════════════
            PUZ QUIBS

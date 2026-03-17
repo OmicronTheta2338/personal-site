@@ -18,42 +18,94 @@ function normalizeAnswer(answer) {
 }
 
 export function initPuzzles() {
-    const forms = document.querySelectorAll('.verify-form');
+    // 1. Initialize existing solved puzzles on page load
+    const huntSections = document.querySelectorAll('section[data-hunt-id]');
 
-    forms.forEach(form => {
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const input = form.querySelector('.answer-input');
-            const resultSpan = form.querySelector('.verify-result');
-            const targetHash = form.getAttribute('data-hash');
-            
-            if (!input || !resultSpan || !targetHash) return;
-            
-            const rawAnswer = input.value;
-            const normalized = normalizeAnswer(rawAnswer);
-            
-            if (!normalized) {
-                resultSpan.textContent = "Please enter an answer.";
-                resultSpan.style.color = "var(--black)";
-                return;
+    huntSections.forEach(section => {
+        const huntId = section.getAttribute('data-hunt-id');
+        if (!huntId) return;
+
+        const logContainer = section.querySelector('.solved-puzzles-list');
+
+        // Find all puzzle forms in this hunt
+        const puzzleForms = section.querySelectorAll('.verify-form');
+
+        puzzleForms.forEach(form => {
+            const puzzleName = form.getAttribute('data-puzzle-name') || 'Unknown Puzzle';
+            const storageKey = `solved_${huntId}_${puzzleName}`;
+
+            // Check if solved in localStorage
+            const savedAnswer = localStorage.getItem(storageKey);
+
+            if (savedAnswer) {
+                markAsSolved(form, puzzleName, savedAnswer, logContainer);
             }
 
-            try {
-                const computedHash = await sha256(normalized);
-                
-                if (computedHash === targetHash.toLowerCase()) {
-                    resultSpan.textContent = "Correct!";
-                    resultSpan.style.color = "var(--comp-dark-color)"; // using a variable from style.css
-                } else {
-                    resultSpan.textContent = "Incorrect.";
-                    resultSpan.style.color = "red"; // simple color for incorrect
+            // 2. Handle new submissions
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const input = form.querySelector('.answer-input');
+                const resultSpan = form.querySelector('.verify-result');
+                const targetHash = form.getAttribute('data-hash');
+
+                if (!input || !resultSpan || !targetHash) return;
+
+                const rawAnswer = input.value;
+                const normalized = normalizeAnswer(rawAnswer);
+
+                if (!normalized) {
+                    resultSpan.textContent = "Please enter an answer.";
+                    resultSpan.style.color = "var(--black)";
+                    return;
                 }
-            } catch (err) {
-                console.error("Error verifying answer:", err);
-                resultSpan.textContent = "Verification error.";
-                resultSpan.style.color = "red";
-            }
+
+                try {
+                    const computedHash = await sha256(normalized);
+
+                    if (computedHash === targetHash.toLowerCase()) {
+                        // Correct answer!
+                        // Save to localStorage
+                        localStorage.setItem(storageKey, normalized);
+                        // Update UI
+                        markAsSolved(form, puzzleName, normalized, logContainer);
+                    } else {
+                        resultSpan.textContent = "Incorrect.";
+                        resultSpan.style.color = "red";
+                    }
+                } catch (err) {
+                    console.error("Error verifying answer:", err);
+                    resultSpan.textContent = "Verification error.";
+                    resultSpan.style.color = "red";
+                }
+            });
         });
     });
+}
+
+function markAsSolved(form, puzzleName, answer, logContainer) {
+    // Hide the form
+    form.style.display = 'none';
+
+    // Show the solved message in its place
+    const solvedDisplay = form.parentElement.querySelector('.solved-display');
+    if (solvedDisplay) {
+        solvedDisplay.style.display = 'block';
+        solvedDisplay.textContent = `Solved! Answer: ${answer}`;
+    }
+
+    // Add to the hunt log at the bottom if we have a log container
+    if (logContainer) {
+        // Only append if it's not already in the log (prevents duplicates on re-init)
+        const existingEntries = Array.from(logContainer.querySelectorAll('li'));
+        const alreadyLogged = existingEntries.some(li => li.getAttribute('data-puzzle') === puzzleName);
+
+        if (!alreadyLogged) {
+            const li = document.createElement('li');
+            li.setAttribute('data-puzzle', puzzleName);
+            li.style.marginBottom = "5px";
+            li.innerHTML = `<strong>${puzzleName}</strong> correctly answered with <strong>${answer}</strong>`;
+            logContainer.appendChild(li);
+        }
+    }
 }
